@@ -14,9 +14,19 @@ const variants: Variant[] = LESSONS.flatMap((lesson): Variant[] =>
 );
 
 describe('lesson registry', () => {
-  it('has the seven requested lessons with unique ids', () => {
-    expect(LESSONS.map((l) => l.id)).toEqual(['avnrt', 'avrt', 'af', 'flutter', 'at', 'junctional', 'ventricular']);
-    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(7);
+  it('has the fifteen lessons with unique ids', () => {
+    expect(LESSONS.map((l) => l.id)).toEqual([
+      'avnrt', 'avrt', 'wpw', 'aberrancy', 'af', 'flutter', 'at', 'junctional', 'ventricular',
+      'pvc', 'vt', 'torsades', 'vf', 'hypokalemia', 'hyperkalemia',
+    ]);
+    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(15);
+  });
+
+  it('groups the new lessons by topic', () => {
+    const g = (id: string) => GROUPS.find((x) => x.id === id)?.lessons;
+    expect(g('preexcitation')).toEqual(['wpw', 'aberrancy']);
+    expect(g('ventricular-arrhythmias')).toEqual(['pvc', 'vt', 'torsades', 'vf']);
+    expect(g('electrolytes')).toEqual(['hypokalemia', 'hyperkalemia']);
   });
 
   it('groups every lesson exactly once, with AVNRT and AVRT together under SVT', () => {
@@ -38,6 +48,13 @@ describe('lesson registry', () => {
     expect(getLesson('junctional')!.options!.map((o) => o.id)).toEqual(['beat', 'rhythm']);
     expect(getLesson('ventricular')!.options!.map((o) => o.id)).toEqual(['beat', 'rhythm']);
     expect(getLesson('avnrt')!.options).toBeUndefined();
+    expect(getLesson('pvc')!.options!.map((o) => o.id)).toEqual(['single', 'bigeminy', 'couplet']);
+    expect(getLesson('vt')!.options!.map((o) => o.id)).toEqual(['sustained', 'nsvt']);
+    expect(getLesson('wpw')!.options!.map((o) => o.id)).toEqual(['sinus', 'orthodromic', 'antidromic', 'af']);
+    expect(getLesson('torsades')!.options!.map((o) => o.id)).toEqual(['selflimit', 'vf']);
+    expect(getLesson('vf')!.options!.map((o) => o.id)).toEqual(['coarse', 'fine']);
+    expect(getLesson('aberrancy')!.options).toBeUndefined();
+    expect(getLesson('hypokalemia')!.options).toBeUndefined();
   });
 
   it('falls back to the default option for unknown values', () => {
@@ -225,6 +242,74 @@ describe('captions are synchronised with the events they describe', () => {
       expect(rhythm.summary.rows.find((r) => r.label === 'Rate')!.value).toMatch(/per minute/);
       expect(beat.scenes.some((s) => s.id === 'resume')).toBe(true);
       expect(rhythm.scenes.some((s) => s.id === 'rhythm')).toBe(true);
+    }
+  });
+});
+
+describe('new lessons are synchronised with the events they describe', () => {
+  it('PVC: the early-beat scene contains the first PVC, and the pause scene follows it', () => {
+    for (const o of ['single', 'bigeminy', 'couplet']) {
+      const b = buildLesson(getLesson('pvc')!, o);
+      const r = Object.values(b.rhythms)[0];
+      const pvc = r.beats.find((x) => x.origin === 'ventricular')!;
+      contains(b.scenes, 'early', r.window, pvc.t + 0.1);
+      const pause = b.scenes.find((s) => s.id === 'pause')!;
+      expect(pause.span[0]).toBeGreaterThanOrEqual(b.scenes.find((s) => s.id === 'early')!.span[1] - 1e-9);
+    }
+  });
+
+  it('VT: the onset scene contains the first VT beat; sustained VT shows P waves inside the dissociation scene', () => {
+    for (const o of ['sustained', 'nsvt']) {
+      const b = buildLesson(getLesson('vt')!, o);
+      const r = Object.values(b.rhythms)[0];
+      const first = r.beats.find((x) => x.origin === 'ventricular')!;
+      contains(b.scenes, 'onset', r.window, first.t + 0.1);
+    }
+    const b = buildLesson(getLesson('vt')!, 'sustained');
+    const r = Object.values(b.rhythms)[0];
+    const s = b.scenes.find((x) => x.id === 'dissociation')!;
+    const inside = r.atrial.filter((a) => a.t / r.window >= s.span[0] && a.t / r.window <= s.span[1]);
+    expect(inside.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('torsades: the trigger scene holds the R-on-T PVC and the twisting scene begins with the run', () => {
+    for (const o of ['selflimit', 'vf']) {
+      const b = buildLesson(getLesson('torsades')!, o);
+      const r = Object.values(b.rhythms)[0];
+      const rOnT = r.marks.find((m) => m.kind === 'tag' && m.text === 'R on T')!;
+      if (rOnT.kind !== 'tag') throw new Error('unreachable');
+      contains(b.scenes, 'trigger', r.window, rOnT.t);
+      const tw = b.scenes.find((s) => s.id === 'twisting')!;
+      expect(tw.span[0] * r.window).toBeLessThanOrEqual(rOnT.t + 0.2);
+    }
+  });
+
+  it('VF: the fibrillation scene starts after the breakdown scene and shows no QRS beats', () => {
+    for (const o of ['coarse', 'fine']) {
+      const b = buildLesson(getLesson('vf')!, o);
+      const r = Object.values(b.rhythms)[0];
+      const vf = b.scenes.find((s) => s.id === 'vf')!;
+      expect(r.beats.filter((x) => x.t / r.window >= vf.span[0]).length).toBe(0);
+    }
+  });
+
+  it('electrolyte lessons carry a potassium meter on every animated scene, rising or falling in order', () => {
+    const hypo = buildLesson(getLesson('hypokalemia')!).scenes.filter((s) => s.view === 'play');
+    const hyper = buildLesson(getLesson('hyperkalemia')!).scenes.filter((s) => s.view === 'play');
+    expect(hypo.every((s) => s.meter !== undefined)).toBe(true);
+    expect(hyper.every((s) => s.meter !== undefined)).toBe(true);
+    const falling = hypo.map((s) => s.meter!);
+    expect([...falling].sort((a, b) => b - a)).toEqual(falling);
+    const rising = hyper.map((s) => s.meter!);
+    expect([...rising].sort((a, b) => a - b)).toEqual(rising);
+    expect(falling[falling.length - 1]).toBeLessThan(3.0);
+    expect(rising[rising.length - 1]).toBeGreaterThan(8);
+  });
+
+  it('non-electrolyte lessons never show a meter', () => {
+    for (const l of LESSONS.filter((x) => !['hypokalemia', 'hyperkalemia'].includes(x.id))) {
+      const b = buildLesson(l, l.defaultOption);
+      expect(b.scenes.every((s) => s.meter === undefined)).toBe(true);
     }
   });
 });

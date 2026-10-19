@@ -18,6 +18,9 @@ export const PATHS: Record<PathId, Point[]> = {
   'bb-right': [[190, 128], [220, 144], [250, 160]],
   ap: [[296, 56], [296, 140]],
   'flutter-loop': [[84, 21], [296, 21], [296, 47], [84, 47], [84, 21]],
+  'vent-loop': [[100, 150], [298, 150], [298, 180], [100, 180], [100, 150]],
+  'vent-l': [[232, 164], [90, 164]],
+  'vent-r': [[232, 164], [300, 164]],
 };
 
 export const SITES: Record<SiteId, Point> = {
@@ -89,7 +92,9 @@ export interface DiagramFrame {
 }
 
 const ATRIAL_PATHS: PathId[] = ['atria-sa', 'atria-ect', 'atria-retro', 'atria-ap', 'flutter-loop'];
-const VENTRICULAR_PATHS: PathId[] = ['bb-left', 'bb-right'];
+const VENTRICULAR_PATHS: PathId[] = ['bb-left', 'bb-right', 'vent-l', 'vent-r'];
+/** Spark and loop positions below this y are in the ventricles. */
+const VENTRICLE_TOP = 138;
 
 function strongest(a: Glow | null, b: Glow): Glow {
   return !a || b.opacity > a.opacity ? b : a;
@@ -123,7 +128,9 @@ export function frameAt(pulses: Pulse[], rt: number): DiagramFrame {
       const [x, y] = pointAlong(PATHS[p.path], ((rt - p.t0) / p.period) % 1);
       frame.dots.push({ x, y, tone: p.tone, opacity, r: 4.6 });
       frame.trails.push({ path: p.path, tone: p.tone, opacity: opacity * 0.5, from: 0, to: 1 });
-      frame.atria = strongest(frame.atria, { tone: p.tone, opacity: opacity * 0.25 });
+      const lg: Glow = { tone: p.tone, opacity: opacity * 0.25 };
+      if (p.path === 'vent-loop') frame.ventricles = strongest(frame.ventricles, lg);
+      else frame.atria = strongest(frame.atria, lg);
     } else if (p.type === 'flash') {
       const age = rt - p.t;
       if (age < 0 || age > RING_LIFE) continue;
@@ -137,7 +144,9 @@ export function frameAt(pulses: Pulse[], rt: number): DiagramFrame {
       const age = rt - p.t;
       if (age < 0 || age > SPARK_LIFE) continue;
       frame.dots.push({ x: p.x, y: p.y, tone: p.tone, opacity: 1 - age / SPARK_LIFE, r: 2.8 });
-      frame.atria = strongest(frame.atria, { tone: p.tone, opacity: 0.18 * (1 - age / SPARK_LIFE) });
+      const sg: Glow = { tone: p.tone, opacity: 0.18 * (1 - age / SPARK_LIFE) };
+      if (p.y >= VENTRICLE_TOP) frame.ventricles = strongest(frame.ventricles, sg);
+      else frame.atria = strongest(frame.atria, sg);
     }
   }
   return frame;

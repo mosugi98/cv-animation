@@ -1,20 +1,36 @@
+import { aberrancyLesson } from './aberrancy';
 import { afLesson } from './af';
 import { atLesson } from './at';
 import { avnrtLesson } from './avnrt';
 import { avrtLesson } from './avrt';
 import { flutterLesson } from './flutter';
+import { hyperkalemiaLesson } from './hyperkalemia';
+import { hypokalemiaLesson } from './hypokalemia';
 import { junctionalLesson } from './junctional';
+import { pvcLesson } from './pvc';
+import { torsadesLesson } from './torsades';
 import type { Lesson, LessonBuild, LessonGroup, LessonId } from './types';
 import { ventricularLesson } from './ventricular';
+import { vfLesson } from './vf';
+import { vtLesson } from './vt';
+import { wpwLesson } from './wpw';
 
 export const LESSONS: Lesson[] = [
   avnrtLesson,
   avrtLesson,
+  wpwLesson,
+  aberrancyLesson,
   afLesson,
   flutterLesson,
   atLesson,
   junctionalLesson,
   ventricularLesson,
+  pvcLesson,
+  vtLesson,
+  torsadesLesson,
+  vfLesson,
+  hypokalemiaLesson,
+  hyperkalemiaLesson,
 ];
 
 export const GROUPS: LessonGroup[] = [
@@ -24,6 +40,12 @@ export const GROUPS: LessonGroup[] = [
     blurb:
       'A regular, fast, narrow-complex tachycardia that depends on tissue above the ventricles. Two common re-entry types, with different circuits.',
     lessons: ['avnrt', 'avrt'],
+  },
+  {
+    id: 'preexcitation',
+    title: 'Pre-excitation and aberrancy',
+    blurb: 'Wide-complex look-alikes: an extra pathway that bypasses the AV node, and a bundle branch that cannot keep up.',
+    lessons: ['wpw', 'aberrancy'],
   },
   {
     id: 'atrial',
@@ -36,6 +58,18 @@ export const GROUPS: LessonGroup[] = [
     title: 'Escape rhythms',
     blurb: 'Backup pacemakers that take over after a pause. They arrive late, never early.',
     lessons: ['junctional', 'ventricular'],
+  },
+  {
+    id: 'ventricular-arrhythmias',
+    title: 'Ventricular arrhythmias',
+    blurb: 'Rhythms that start in the ventricles, from a single early beat to a cardiac arrest rhythm. Recognise them early.',
+    lessons: ['pvc', 'vt', 'torsades', 'vf'],
+  },
+  {
+    id: 'electrolytes',
+    title: 'Electrolytes',
+    blurb: 'Potassium changes how heart cells recharge and conduct, and the ECG shows it.',
+    lessons: ['hypokalemia', 'hyperkalemia'],
   },
 ];
 

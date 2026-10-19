@@ -24,6 +24,10 @@ export interface AssembleInput {
   drawAtrial?: boolean;
   fibrillation?: boolean;
   isoelectric?: boolean;
+  /** Replaces the normal narrow QRS, and the wide QRS of beats flagged `customQrs` (RBBB pattern, widened QRS). */
+  qrs?: (t: number, q: number) => number;
+  /** False when the caller draws T, U and ST components itself (through `extra`). */
+  drawT?: boolean;
   /** T-wave shape for beats with R-R under 0.45 s, so a retrograde P wave in the ST segment stays distinguishable. */
   fastT?: { amp: number; delay: number };
 }
@@ -42,12 +46,20 @@ export function assemble(i: AssembleInput): RhythmDef {
     const fast = i.fastT !== undefined && rr < 0.45;
     const tAmp = fast ? i.fastT!.amp : 0.3;
     const tDelay = fast ? i.fastT!.delay : tDelayFor(rr);
+    // Fast wide-complex rhythms: shrink and advance the discordant T wave so it does not land on the next QRS.
+    const squeeze = rr < 0.5 ? rr / 0.5 : 1;
+    const drawT = i.drawT !== false;
     if (b.wide) {
-      parts.push((t) => qrsWide(t, b.t), (t) => tWaveWide(t, b.t));
+      const wideQrs = b.customQrs && i.qrs ? i.qrs : qrsWide;
+      parts.push((t) => wideQrs(t, b.t));
+      if (drawT) parts.push((t) => tWaveWide(t, b.t, 0.4 * squeeze, -0.32 * squeeze, 0.06 * Math.max(squeeze, 0.7)));
     } else if (b.preexcited) {
-      parts.push((t) => qrsDelta(t, b.t), (t) => tWave(t, b.t, tAmp, tDelay));
+      parts.push((t) => qrsDelta(t, b.t));
+      if (drawT) parts.push((t) => tWave(t, b.t, tAmp, tDelay));
     } else {
-      parts.push((t) => qrsNarrow(t, b.t), (t) => tWave(t, b.t, tAmp, tDelay));
+      const qrs = i.qrs ?? qrsNarrow;
+      parts.push((t) => qrs(t, b.t));
+      if (drawT) parts.push((t) => tWave(t, b.t, tAmp, tDelay));
     }
   });
 
@@ -120,3 +132,29 @@ export function rrBars(times: number[], tone: Tone = 'orange'): Mark[] {
 }
 
 export const rate = (interval: number): number => 60 / interval;
+
+/**
+ * A beat that starts in the ventricular muscle: a focus flashes and the wave spreads slowly through muscle in both
+ * directions, which is why the QRS is wide.
+ */
+export function ventricularFocusPulses(q: number, tone: Tone = 'orange'): Pulse[] {
+  return [
+    { type: 'flash', site: 'ventricle', t: q - 0.02, tone },
+    { type: 'travel', path: 'vent-l', t0: q, t1: q + 0.14, tone },
+    { type: 'travel', path: 'vent-r', t0: q, t1: q + 0.1, tone },
+  ];
+}
+
+/** A sinus P wave that reaches the His bundle but finds the ventricles still refractory. */
+export function refractoryP(p: number): { pulses: Pulse[]; atrial: AtrialEvent; marks: Mark[] } {
+  return {
+    pulses: [
+      { type: 'flash', site: 'sa', t: p, tone: 'blue' },
+      { type: 'travel', path: 'atria-sa', t0: p, t1: p + 0.08, tone: 'blue' },
+      { type: 'travel', path: 'avn-direct', t0: p + 0.08, t1: p + 0.16, tone: 'blue' },
+      { type: 'travel', path: 'his', t0: p + 0.16, t1: p + 0.22, tone: 'red', stop: 0.5 },
+    ],
+    atrial: { t: p, kind: 'sinus', conducted: false, amp: 0.15 },
+    marks: [{ kind: 'dot', t: p + 0.05, tone: 'red' }],
+  };
+}

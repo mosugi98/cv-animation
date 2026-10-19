@@ -1,7 +1,22 @@
 import type { TimedScene } from '../engine/timeline';
 import type { RhythmDef, Tone } from '../engine/types';
 
-export type LessonId = 'avnrt' | 'avrt' | 'af' | 'flutter' | 'at' | 'junctional' | 'ventricular';
+export type LessonId =
+  | 'avnrt'
+  | 'avrt'
+  | 'wpw'
+  | 'aberrancy'
+  | 'af'
+  | 'flutter'
+  | 'at'
+  | 'junctional'
+  | 'ventricular'
+  | 'pvc'
+  | 'vt'
+  | 'torsades'
+  | 'vf'
+  | 'hypokalemia'
+  | 'hyperkalemia';
 
 /** One caption-synchronised step of a lesson. */
 export interface LessonScene extends TimedScene {
@@ -19,6 +34,8 @@ export interface LessonScene extends TimedScene {
    * rhythm and cover consecutive spans, so one rhythm can be explained in several steps.
    */
   span: readonly [number, number];
+  /** Serum potassium (mmol/L) to show on the level meter in this scene. */
+  meter?: number;
 }
 
 export interface LessonOption {
@@ -55,6 +72,11 @@ export interface DiagramConfig {
   flutterCircuit?: boolean;
   /** Draw the ectopic atrial focus. */
   ectopicFocus?: boolean;
+  /** Draw a ventricular focus and dashed ventricular re-entry circuit. */
+  ventricularFocus?: boolean;
+  ventricleCircuit?: boolean;
+  /** Label the left and right bundle branches. */
+  bundleLabels?: boolean;
 }
 
 export interface LessonBuild {

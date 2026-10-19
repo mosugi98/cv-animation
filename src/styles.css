@@ -257,7 +257,7 @@ body {
 .trace--seg { stroke: var(--c); stroke-width: 1.7; }
 .mk-dot { fill: var(--c); }
 .mk-bar { stroke: var(--c); stroke-width: 2.4; stroke-linecap: round; }
-.mk-note { fill: var(--c); font-size: 7px; font-weight: 650; text-anchor: middle; }
+.mk-note { fill: var(--c); font-size: 7px; font-weight: 650; text-anchor: middle; paint-order: stroke; stroke: #fffdf8; stroke-width: 2.4px; stroke-linejoin: round; }
 .mk-badge { fill: var(--c); }
 
 /* Legend */
@@ -320,3 +320,15 @@ body {
 @media (max-width: 420px) {
   .summary__row { grid-template-columns: 1fr; gap: 2px; }
 }
+
+/* Potassium level meter */
+.level-meter { padding: 8px 12px 6px; }
+.level-meter__head { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--soft); }
+.level-meter__head strong { color: var(--c); font-size: 13px; }
+.level-meter__scale { position: relative; height: 12px; margin: 8px 6px 4px; border-radius: 6px; background: var(--line); }
+.level-meter__normal { position: absolute; top: 0; bottom: 0; border-radius: 6px; background: color-mix(in srgb, var(--blue) 35%, transparent); }
+.level-meter__marker { position: absolute; top: -3px; width: 6px; height: 18px; margin-left: -3px; border-radius: 3px; background: var(--c); transition: left 0.5s ease, background-color 0.3s; }
+.level-meter__ticks { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--soft); }
+@media (prefers-reduced-motion: reduce) { .level-meter__marker { transition: none; } }
+.is-reduced .level-meter__marker { transition: none; }
+.level-meter__head strong.tone-orange { color: var(--orange-ink, #a34608); }

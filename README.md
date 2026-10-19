@@ -7,7 +7,7 @@ An animated ECG explainer that walks through the four AV blocks (1st degree, Mob
 The site has two parts, switched from the top navigation:
 
 - **Heart block** (`#/`): the original 33-second explainer described above.
-- **Arrhythmia library** (`#/library`): seven short animated lessons built on a reusable engine. See [Arrhythmia Animation Library](#arrhythmia-animation-library).
+- **Arrhythmia library** (`#/library`): fifteen short animated lessons built on a reusable engine. See [Arrhythmia Animation Library](#arrhythmia-animation-library).
 
 ## Run locally
 
@@ -41,17 +41,25 @@ Other hosts (Vercel, Netlify, Cloudflare Pages): build command `npm run build`, 
 
 ## Arrhythmia Animation Library
 
-Open it from the navigation bar, or go straight to `#/library`. Every lesson is about 25-35 seconds with 5-7 scenes. Each scene has a synchronised caption, a conduction diagram and an ECG strip, and the last scene is a **rhythm recognition summary** (key line, defining features and the commonest look-alike).
+Open it from the navigation bar, or go straight to `#/library`. Every lesson is about 25-35 seconds with 5-7 scenes. Lessons are grouped on the index by topic: SVT, pre-excitation and aberrancy, atrial rhythms, escape rhythms, ventricular arrhythmias and electrolytes. Each scene has a synchronised caption, a conduction diagram and an ECG strip, and the last scene is a **rhythm recognition summary** (key line, defining features and the commonest look-alike).
 
 | Lesson (URL) | What it shows | Options |
 |---|---|---|
 | AVNRT (`#/library/avnrt`) | Dual AV-node pathways. A premature atrial beat blocks in the fast pathway, goes down the slow one and returns up the fast one. Regular narrow tachycardia, P wave hidden in the QRS. | none |
 | AVRT (`#/library/avrt`) | A macro-circuit: AV node down, accessory pathway up. Pre-excitation in sinus rhythm (short PR, delta wave), then orthodromic tachycardia with a retrograde P wave clearly after the QRS. | none |
+| WPW (`#/library/wpw`) | Accessory pathway that bypasses the AV node. Short PR and delta wave in sinus rhythm; orthodromic AVRT (narrow); antidromic AVRT (wide, regular, mimics VT); pre-excited AF (irregular, wide, shortest R-R under 250 ms, avoid AV-nodal blockers). | Rhythm: sinus, orthodromic, antidromic, AF |
+| SVT with aberrancy (`#/library/aberrancy`) | A premature atrial beat starts AVNRT, but the right bundle is still recovering: regular tachycardia with a wide rSR′ (RBBB) QRS, a look-alike for VT. | none |
 | Atrial fibrillation (`#/library/af`) | Chaotic atrial wavelets, no P waves, fibrillatory baseline, an irregularly irregular ventricular response, with impulses blocked in the AV node. | none |
 | Atrial flutter (`#/library/flutter`) | An organised right-atrial circuit at about 300/min with sawtooth waves and no flat baseline. | AV conduction pattern: 2:1, 4:1, variable |
 | Atrial tachycardia (`#/library/at`) | Sinus rhythm, then a regular ectopic atrial focus with a different P wave and a flat baseline between waves. | AV conduction: 1:1, 2:1 |
 | Junctional escape (`#/library/junctional`) | Sinus node stops; after a pause the AV junction fires. Narrow QRS, retrograde P. | Escape beat or escape rhythm |
 | Ventricular escape (`#/library/ventricular`) | AV block: P waves march on unconducted; after a long pause a wide-complex ventricular escape fires. | Escape beat or escape rhythm |
+| PVC (`#/library/pvc`) | Early, wide, bizarre beat with no P wave and a discordant T wave; the sinus rhythm is not reset, so the pause is fully compensatory. | Single PVC, bigeminy, couplet |
+| Ventricular tachycardia (`#/library/vt`) | A fast, regular, wide-complex rhythm from a ventricular circuit, with AV dissociation. | Sustained or non-sustained |
+| Torsades de pointes (`#/library/torsades`) | Long QT, then short-long-short (PVC, pause, R-on-T PVC), then a twisting polymorphic VT. | Stops by itself, or degenerates to VF |
+| Ventricular fibrillation (`#/library/vf`) | Fast ventricular rhythm breaks into chaos: no QRS, no output. | Coarse or fine |
+| Hypokalaemia (`#/library/hypokalemia`) | A potassium meter falls while the ECG shows flat T, ST depression, U waves and PVCs. | none |
+| Hyperkalaemia (`#/library/hyperkalemia`) | A potassium meter rises while the ECG goes through peaked T, flat P with long PR and wide QRS, then a sine wave. | none |
 
 Options are selected on the lesson page and stored in the URL (`#/library/flutter?option=4%3A1`), so a link opens the same variant. Hash routes mean GitHub Pages needs no rewrite rules.
 
@@ -72,6 +80,9 @@ rhythm builder  ->  RhythmDef { signal(t), marks, pulses, beats, atrial events }
 - A **lesson** (`src/lessons/*.ts`) is only copy and configuration: scenes, which rhythm and which part of it (`span`) each scene plays, legend, diagram options and the recognition summary. Scenes are laid out end to end by `sequence()`, so timelines are contiguous by construction.
 - `LessonPlayer` derives everything from one elapsed-time value, so scrubbing, restarting and scene jumps cannot drift out of sync.
 
+### Level meter
+A scene may set `meter` (serum potassium in mmol/L); `LessonPlayer` then shows a `LevelMeter` above the diagram, with the normal range (3.5-5.0) shaded and a text alternative that gives the value and whether it is low, normal or high. Only the two electrolyte lessons use it.
+
 ### Add a lesson
 
 1. Write a rhythm builder in `src/rhythms/` that returns `assemble({...})`. Give every variant a **unique `id`** (it is a cache key) and make the description say "schematic".
@@ -81,17 +92,18 @@ rhythm builder  ->  RhythmDef { signal(t), marks, pulses, beats, atrial events }
 
 ### Tests that guard the medicine
 
-`tests/rhythms-library.test.ts` asserts the defining features of each rhythm, so a data change that breaks the clinical pattern fails the build. Examples: AVNRT uses slow-forward and fast-backward pathways with retrograde P under 70 ms and no accessory pathway; AVRT uses the accessory pathway backwards with RP of at least 70 ms but under half the R-R; AF has no organised atrial events and R-R intervals that never repeat; flutter keeps a constant 200 ms cycle and a fixed flutter-to-QRS interval for 2:1, 4:1 and variable conduction; junctional and ventricular escapes always arrive later than the preceding cycle, never earlier.
+`tests/rhythms-library.test.ts` asserts the defining features of each rhythm, so a data change that breaks the clinical pattern fails the build. Examples: AVNRT uses slow-forward and fast-backward pathways with retrograde P under 70 ms and no accessory pathway; AVRT uses the accessory pathway backwards with RP of at least 70 ms but under half the R-R; AF has no organised atrial events and R-R intervals that never repeat; flutter keeps a constant 200 ms cycle and a fixed flutter-to-QRS interval for 2:1, 4:1 and variable conduction; junctional and ventricular escapes always arrive later than the preceding cycle, never earlier. For the ventricular and electrolyte lessons: a PVC is early, wide, has no conducted P and is followed by a full compensatory pause; VT is regular and wide with sinus P waves dissociated from it; torsades starts with short-long-short and R-on-T, has a long QT and a twisting envelope; VF has no QRS and never repeats; antidromic AVRT is regular and wide; pre-excited AF is irregular with a shortest R-R under 250 ms; aberrancy has an rSR′ complex; hypokalaemia shows a flat T, ST depression and a U wave that grows with severity; hyperkalaemia moves from a peaked T to flat P, long PR and wide QRS, then a sine wave.
 
 ## Project layout
 
 ```
 src/Root.tsx            router shell: navigation + heart block / library / lesson pages
 src/engine/             library engine: types, morphology, strip + diagram geometry, timeline
-src/rhythms/            library rhythm builders (AVNRT, AVRT, AF, flutter, AT, escapes)
+src/rhythms/            library rhythm builders (AVNRT, AVRT, WPW, aberrancy, AF, flutter, AT, escapes,
+                        PVC, VT, torsades, VF, potassium stages)
 src/lessons/            library lessons (copy, scenes, options, summaries) and registry
 src/components/library/ ActivationDiagram, SignalStrip, LessonPlayer, LessonView,
-                        LibraryIndex, RecognitionSummary, SiteNav
+                        LibraryIndex, RecognitionSummary, SiteNav, LevelMeter (K+ scale)
 src/lib/route.ts        hash router
 src/data/scenes.ts      heart-block scene timeline and ALL its on-screen copy
 src/data/rhythms.ts     beat definitions (P onsets, PR intervals, escape beats)

@@ -43,7 +43,75 @@ export const tWave = (t: number, q: number, amp = 0.3, delay = 0.32): number =>
   gauss(t, q + delay, delay * 0.14 + 0.005, amp);
 
 /** Discordant (inverted) T wave that follows a wide ventricular QRS. */
-export const tWaveWide = (t: number, q: number): number => gauss(t, q + 0.4, 0.06, -0.32);
+export const tWaveWide = (t: number, q: number, delay = 0.4, amp = -0.32, sigma = 0.06): number =>
+  gauss(t, q + delay, sigma, amp);
+
+/** Right bundle branch block pattern (rSR'): small r, S, then a tall broad R' that ends the QRS late (~0.25 s). */
+export function qrsRbbb(t: number, q: number): number {
+  return gauss(t, q + 0.03, 0.013, 0.26) + gauss(t, q + 0.075, 0.017, -0.5) + gauss(t, q + 0.15, 0.04, 0.9);
+}
+
+/** Tall, narrow-based, symmetric ("tented") T wave of hyperkalaemia. */
+export const peakedT = (t: number, q: number, amp = 0.75, delay = 0.22): number => gauss(t, q + delay, 0.03, amp);
+
+/** U wave: a small hump after the T wave, prominent in hypokalaemia. */
+export const uWave = (t: number, q: number, amp = 0.1, delay = 0.5): number => gauss(t, q + delay, 0.05, amp);
+
+/** Downsloping ST depression between `from` and `to` seconds after QRS onset. */
+export function stDepression(t: number, q: number, depth = 0.1, from = 0.1, to = 0.28): number {
+  const sig = (x: number) => 1 / (1 + Math.exp(-x));
+  return -depth * (sig((t - (q + from)) / 0.012) - sig((t - (q + to)) / 0.02));
+}
+
+/** Broad ventricular complex whose width is stretched by `widen` (1 = normal narrow QRS ~0.09 s). */
+export function qrsBroad(t: number, q: number, widen = 1, amp = 1): number {
+  return (
+    gauss(t, q + 0.015 * widen, 0.008 * widen, -0.1 * amp) +
+    gauss(t, q + 0.05 * widen, 0.011 * widen, amp) +
+    gauss(t, q + 0.088 * widen, 0.011 * widen, -0.3 * amp)
+  );
+}
+
+const smoothstep = (x: number): number => {
+  const c = Math.min(Math.max(x, 0), 1);
+  return c * c * (3 - 2 * c);
+};
+
+/**
+ * Ventricular fibrillation: chaotic, unrepeating undulations (about 4-7 per second), no QRS. It fades in over
+ * 0.4 s from `t0`. `amp` is about 0.8 for coarse VF and about 0.15 for fine VF.
+ */
+export function vfWave(t: number, t0: number, amp = 0.8): number {
+  if (t < t0) return 0;
+  const parts: [number, number, number, number, number][] = [
+    [4.3, 0.2, 0.6, 1.3, 1.0],
+    [5.6, 1.7, 0.9, 0.8, 0.8],
+    [6.4, 2.9, 1.4, 1.9, 0.6],
+    [3.7, 4.1, 0.5, 0.7, 0.7],
+    [7.1, 5.3, 1.1, 1.6, 0.4],
+  ];
+  let v = 0;
+  for (const [f, ph, g, m, a] of parts) v += a * Math.sin(2 * Math.PI * f * t + ph + m * Math.sin(2 * Math.PI * g * t));
+  const wobble = 0.65 + 0.35 * Math.sin(2 * Math.PI * 0.55 * t + 1);
+  return (amp * v * wobble * smoothstep((t - t0) / 0.4)) / 2.2;
+}
+
+/**
+ * Polymorphic VT of torsades de pointes: a carrier at `rate` per minute inside a slowly turning envelope, so
+ * the complexes grow, shrink through a node and come back with opposite polarity (the "twisting" of the points).
+ */
+export function torsadesWave(t: number, t0: number, t1: number, rate = 220, spindle = 1.15, amp = 0.8): number {
+  if (t < t0 || t > t1) return 0;
+  const f = rate / 60;
+  const envelope = Math.cos((Math.PI * (t - t0)) / spindle);
+  const fade = smoothstep((t - t0) / 0.12) * smoothstep((t1 - t) / 0.2);
+  return amp * envelope * Math.sin(2 * Math.PI * f * (t - t0)) * fade;
+}
+
+/** Sine-wave pattern of severe hyperkalaemia: QRS and T have merged into one smooth oscillation. */
+export function sineWave(t: number, t0: number, period = 0.55, amp = 0.7): number {
+  return t < t0 ? 0 : amp * Math.sin((2 * Math.PI * (t - t0)) / period) * smoothstep((t - t0) / 0.3);
+}
 
 /**
  * Continuous sawtooth of atrial flutter: slow downslope, sharp upstroke, no flat baseline.

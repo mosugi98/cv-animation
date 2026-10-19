@@ -17,7 +17,7 @@ function Line({ path, className }: { path: PathId; className?: string }) {
 
 /** Simplified conduction schematic. Everything that moves comes from the engine frame. */
 export function ActivationDiagram({ config, frame, description }: Props) {
-  const { dualPathways, accessoryPathway, flutterCircuit, ectopicFocus } = config;
+  const { dualPathways, accessoryPathway, flutterCircuit, ectopicFocus, ventricularFocus, ventricleCircuit, bundleLabels } = config;
   return (
     <svg className="diagram" viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} role="img" aria-label={`Simplified conduction schematic. ${description}`}>
       <text className="dg-row" x="8" y="38">Atria</text>
@@ -31,6 +31,7 @@ export function ActivationDiagram({ config, frame, description }: Props) {
       {frame.ventricles && <rect className={`dg-glow tone-${frame.ventricles.tone}`} x="70" y="140" width="240" height="48" rx="14" opacity={frame.ventricles.opacity} />}
 
       {flutterCircuit && <polyline className="dg-circuit" points={pts(PATHS['flutter-loop'])} />}
+      {ventricleCircuit && <polyline className="dg-circuit" points={pts(PATHS['vent-loop'])} />}
 
       {dualPathways ? (
         <>
@@ -53,6 +54,13 @@ export function ActivationDiagram({ config, frame, description }: Props) {
         </>
       )}
 
+      {bundleLabels && (
+        <>
+          <text className="dg-small" x="150" y="136" textAnchor="end">left bundle</text>
+          <text className="dg-small" x="230" y="136">right bundle</text>
+        </>
+      )}
+
       <circle className="dg-node" cx="190" cy="58" r="4" />
       <circle className="dg-node" cx="190" cy="108" r="4" />
       <circle className="dg-sinus" cx={SITES.sa[0]} cy={SITES.sa[1]} r="3.5" />
@@ -61,6 +69,13 @@ export function ActivationDiagram({ config, frame, description }: Props) {
         <>
           <circle className="dg-focus" cx={SITES.ectopic[0]} cy={SITES.ectopic[1]} r="3.5" />
           <text className="dg-small" x="262" y="22" textAnchor="middle">ectopic</text>
+        </>
+      )}
+
+      {ventricularFocus && (
+        <>
+          <circle className="dg-focus" cx={SITES.ventricle[0]} cy={SITES.ventricle[1]} r="3.5" />
+          <text className="dg-small" x={SITES.ventricle[0]} y="198" textAnchor="middle">ventricular focus</text>
         </>
       )}
 

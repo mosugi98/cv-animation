@@ -14,7 +14,10 @@ export type PathId =
   | 'bb-left'
   | 'bb-right'
   | 'ap'
-  | 'flutter-loop';
+  | 'flutter-loop'
+  | 'vent-loop'
+  | 'vent-l'
+  | 'vent-r';
 
 export type SiteId = 'sa' | 'ectopic' | 'junction' | 'ventricle';
 
@@ -42,6 +45,8 @@ export interface BeatEvent {
   origin: BeatOrigin;
   /** Pre-excited beat (delta wave). */
   preexcited?: boolean;
+  /** Drawn with the rhythm's own `qrs` function even though it is wide (aberrant conduction, widened QRS). */
+  customQrs?: boolean;
 }
 
 export type AtrialKind = 'sinus' | 'ectopic' | 'flutter' | 'retro';

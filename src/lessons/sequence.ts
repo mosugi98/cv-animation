@@ -12,6 +12,7 @@ export interface SceneSpec {
   /** Rhythm key, or null for the recognition-summary scene. */
   rhythm: string | null;
   span?: readonly [number, number];
+  meter?: number;
 }
 
 /** Lays scene specs end to end so the timeline is contiguous by construction. */
@@ -29,6 +30,7 @@ export function sequence(specs: SceneSpec[]): LessonScene[] {
       view: s.rhythm === null ? 'summary' : 'play',
       rhythm: s.rhythm,
       span: s.span ?? [0, 1],
+      ...(s.meter !== undefined ? { meter: s.meter } : {}),
     };
     t += s.dur;
     return scene;

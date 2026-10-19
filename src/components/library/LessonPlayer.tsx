@@ -9,6 +9,7 @@ import type { Lesson } from '../../lessons/types';
 import { SceneCaption } from '../SceneCaption';
 import { TimelineControls } from '../TimelineControls';
 import { ActivationDiagram, Legend } from './ActivationDiagram';
+import { LevelMeter } from './LevelMeter';
 import { RecognitionSummary } from './RecognitionSummary';
 import { SignalStrip } from './SignalStrip';
 
@@ -49,6 +50,7 @@ export function LessonPlayer({ lesson, option, initialTime = 0, forceReduced = f
         <p className="lib-badge">SCHEMATIC EDUCATIONAL EXAMPLE · NOT A PATIENT TRACING</p>
         {scene.view === 'play' && rhythm ? (
           <>
+            {scene.meter !== undefined && <LevelMeter value={scene.meter} />}
             <div className="card card--diagram">
               <ActivationDiagram config={lesson.diagram} frame={frame} description={`${scene.title} ${scene.sub}`} />
             </div>

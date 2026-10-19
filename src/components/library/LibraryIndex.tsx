@@ -1,4 +1,4 @@
-import { GROUPS, buildLesson, getLesson } from '../../lessons';
+import { GROUPS, LESSONS, buildLesson, getLesson } from '../../lessons';
 import { hrefFor } from '../../lib/route';
 import { SignalStrip } from './SignalStrip';
 
@@ -8,7 +8,7 @@ export function LibraryIndex() {
       <header className="lib-head">
         <h1 className="lib-title">Arrhythmia Animation Library</h1>
         <p className="lib-lede">
-          Seven short animated lessons. Each one links the ECG to what happens inside the heart, step by step, and ends with a
+          {LESSONS.length} short animated lessons. Each one links the ECG to what happens inside the heart, step by step, and ends with a
           recognition summary. All rhythms are schematic educational examples, not patient tracings.
         </p>
       </header>
