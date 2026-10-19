@@ -32,9 +32,8 @@ export default function App({ initialTime = 0, forceReduced = false }: Props) {
 
   return (
     <div className={`page${reduced ? ' is-reduced' : ''}`}>
-      <h1 className="sr-only">ECG explainer: heart block, where the gate fails</h1>
-
       <main className={`stage stage--${scene.kind}`} aria-label="Heart block animation">
+        <h1 className="sr-only">ECG explainer: heart block, where the gate fails</h1>
         {scene.kind === 'hook' && (
           <p className="headline">
             {scene.title}

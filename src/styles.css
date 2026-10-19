@@ -194,3 +194,129 @@ body {
   .controls { grid-area: controls; width: 100%; }
   .footer { grid-area: footer; width: 100%; }
 }
+
+/* ===== Arrhythmia Animation Library ===== */
+.tone-navy { --c: var(--navy); }
+.tone-blue { --c: var(--blue); }
+.tone-orange { --c: var(--orange); }
+.tone-red { --c: var(--red); }
+.tone-purple { --c: var(--purple); }
+
+/* Site navigation */
+.site-nav { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+.site-nav nav { max-width: 1100px; margin: 0 auto; display: flex; gap: 6px; padding: 8px 12px; overflow-x: auto; }
+.site-nav a {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px;
+  color: var(--navy); text-decoration: none; font-weight: 650; font-size: 14px; white-space: nowrap;
+}
+.site-nav a[aria-current] { background: var(--navy); color: #fff; }
+.site-nav a:focus-visible, .lib-back:focus-visible, .lesson-card:focus-visible, .seg__btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+/* Pages */
+.lib-page { max-width: 1100px; margin: 0 auto; padding: 14px 16px 40px; display: flex; flex-direction: column; gap: 14px; }
+.lib-head { display: flex; flex-direction: column; gap: 6px; }
+.lib-title { margin: 0; font-size: clamp(24px, 6vw, 34px); line-height: 1.15; }
+.lib-lede { margin: 0; max-width: 62ch; font-size: 16px; line-height: 1.45; color: var(--soft); }
+.lib-back { display: inline-flex; align-items: center; min-height: 44px; width: fit-content; color: var(--blue); font-weight: 650; text-decoration: none; }
+.lib-badge {
+  margin: 0 auto; width: fit-content; max-width: 100%; padding: 4px 10px; border-radius: 999px; text-align: center;
+  border: 1px solid var(--line); background: #fff; font-size: 10px; letter-spacing: 0.04em; color: var(--soft);
+}
+
+/* Option picker */
+.lib-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.lib-options__label { font-size: 14px; font-weight: 650; }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.seg__btn {
+  min-width: 56px; min-height: 44px; padding: 0 16px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--line); background: #fff; color: var(--navy); font: inherit; font-weight: 650;
+}
+.seg__btn.is-on { background: var(--navy); border-color: var(--navy); color: #fff; }
+
+/* Player */
+.lib-player { display: flex; flex-direction: column; gap: 14px; }
+.lib-stage { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.lib-stage .diagram { max-height: min(46vh, 320px); }
+.strip-label { margin: 0 0 4px; font-size: 12px; font-weight: 650; color: var(--soft); }
+.lib-caption { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 96px; }
+.lib-chip { margin: 0; padding: 3px 12px; border-radius: 999px; background: var(--c); color: #fff; font-size: 12px; font-weight: 700; }
+.lib-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.lib-side .controls { width: 100%; }
+
+/* Diagram elements */
+.dg-glow { fill: var(--c); }
+.dg-trail { fill: none; stroke: var(--c); stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+.dg-ring { fill: none; stroke: var(--c); stroke-width: 2; }
+.dg-dot { fill: var(--c); stroke: #fff; stroke-width: 1.2; }
+.dg-circuit { fill: none; stroke: var(--anatomy); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.dg-focus { fill: var(--orange); }
+.dg-small { font-size: 7.5px; fill: var(--soft); }
+.dg-path { fill: none; stroke-linejoin: round; }
+
+/* Strip elements */
+.trace--seg { stroke: var(--c); stroke-width: 1.7; }
+.mk-dot { fill: var(--c); }
+.mk-bar { stroke: var(--c); stroke-width: 2.4; stroke-linecap: round; }
+.mk-note { fill: var(--c); font-size: 7px; font-weight: 650; text-anchor: middle; }
+.mk-badge { fill: var(--c); }
+
+/* Legend */
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; list-style: none; margin: 0; padding: 0 4px; font-size: 12.5px; color: var(--navy); }
+.legend__item { display: inline-flex; align-items: center; gap: 6px; }
+.legend__swatch { width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; }
+
+/* Recognition summary */
+.summary { display: flex; flex-direction: column; gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 12px; }
+.summary__heading { margin: 0; font-size: 18px; line-height: 1.25; }
+.summary__strip { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.summary__key { margin: 0; padding: 10px 14px; border-radius: 14px; background: var(--navy); color: #fff; font-weight: 700; line-height: 1.3; }
+.summary__rows { margin: 0; display: grid; gap: 6px; }
+.summary__row { display: grid; grid-template-columns: 7.5em 1fr; gap: 8px; font-size: 13.5px; line-height: 1.35; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+.summary__row dt { font-weight: 700; color: var(--soft); }
+.summary__row dd { margin: 0; }
+.summary__pitfall { margin: 0; padding-left: 10px; border-left: 3px solid var(--orange); font-size: 13px; line-height: 1.4; color: var(--navy); }
+
+/* Library index */
+.lib-group { display: flex; flex-direction: column; gap: 8px; }
+.lib-group__title { margin: 8px 0 0; font-size: 20px; }
+.lib-group__blurb { margin: 0; max-width: 70ch; font-size: 14.5px; line-height: 1.45; color: var(--soft); }
+.lib-cards { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+.lesson-card {
+  display: flex; flex-direction: column; gap: 6px; height: 100%; padding: 10px; text-decoration: none; color: var(--navy);
+  background: #fff; border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 1px 2px rgba(27, 34, 54, 0.06);
+}
+.lesson-card:hover { border-color: var(--anatomy); box-shadow: 0 3px 10px rgba(27, 34, 54, 0.1); }
+.lesson-card__strip { display: block; border-radius: 12px; overflow: hidden; background: #fffdf8; }
+.lesson-card__title { font-size: 17px; font-weight: 700; }
+.lesson-card__body { display: flex; flex-direction: column; gap: 4px; }
+.lesson-card__rate { font-size: 12px; font-weight: 700; color: var(--orange); }
+.lesson-card__blurb { font-size: 13.5px; line-height: 1.4; color: var(--soft); }
+
+/* Text-safe orange (the plain orange is 4:1 on the beige background) */
+.lib-page { --orange-ink: #a34608; }
+.lib-page .accent-orange, .lesson-card__rate { color: var(--orange-ink); }
+.lib-chip.tone-orange { background: var(--orange-ink); }
+
+/* Phones and tablets: playback controls stay reachable at the bottom while the animation scrolls */
+@media (max-width: 899px) {
+  .lib-side {
+    position: sticky; bottom: 0; z-index: 4; margin: 0 -16px; padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+    background: var(--bg); border-top: 1px solid var(--line);
+  }
+  .lib-side .controls { gap: 6px; }
+  .lib-stage .diagram { max-height: 210px; }
+  .lib-side .scene-btn { min-height: 44px; min-width: 44px; }
+}
+@media (min-width: 900px) {
+  .lib-page { padding: 20px 24px 48px; }
+  .lib-player { display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-areas: 'stage side' 'stage toggle'; gap: 12px 28px; align-items: start; }
+  .lib-stage { grid-area: stage; max-width: 680px; }
+  .lib-side { grid-area: side; position: sticky; top: 72px; }
+  .lib-toggle { grid-area: toggle; }
+}
+@media (max-width: 600px) {
+  .lib-page:not(.lib-index) .lib-lede { display: none; }
+}
+@media (max-width: 420px) {
+  .summary__row { grid-template-columns: 1fr; gap: 2px; }
+}

@@ -1,6 +1,14 @@
 import { SCENES } from '../data/scenes';
 
+interface SceneRef {
+  id: string;
+  title: string;
+  start: number;
+}
+
 interface Props {
+  /** Scenes to navigate; defaults to the heart-block scenes. */
+  scenes?: readonly SceneRef[];
   time: number;
   duration: number;
   playing: boolean;
@@ -16,7 +24,8 @@ interface Props {
 const fmt = (s: number) => `${s.toFixed(1)} s`;
 
 export function TimelineControls(p: Props) {
-  const scene = SCENES[p.sceneIndex];
+  const scenes: readonly SceneRef[] = p.scenes ?? SCENES;
+  const scene = scenes[p.sceneIndex];
   return (
     <section className="controls" aria-label="Playback controls">
       <div className="controls__row">
@@ -43,11 +52,11 @@ export function TimelineControls(p: Props) {
         value={p.time}
         onChange={(e) => p.onSeek(Number(e.target.value))}
         aria-label="Timeline"
-        aria-valuetext={`Scene ${p.sceneIndex + 1} of ${SCENES.length}: ${scene.title}`}
+        aria-valuetext={`Scene ${p.sceneIndex + 1} of ${scenes.length}: ${scene.title}`}
       />
 
       <ol className="scene-nav" aria-label="Scenes">
-        {SCENES.map((s, i) => (
+        {scenes.map((s, i) => (
           <li key={s.id}>
             <button
               type="button"
