@@ -1,6 +1,6 @@
 /** Shared model for the Arrhythmia Animation Library. All times are seconds of rhythm time. */
 
-export type Tone = 'navy' | 'blue' | 'orange' | 'red' | 'purple';
+export type Tone = 'navy' | 'blue' | 'orange' | 'red' | 'purple' | 'teal';
 
 export type PathId =
   | 'atria-sa'
@@ -17,9 +17,20 @@ export type PathId =
   | 'flutter-loop'
   | 'vent-loop'
   | 'vent-l'
-  | 'vent-r';
+  | 'vent-r'
+  | 'cross-l'
+  | 'cross-r'
+  | 'lbb-trunk'
+  | 'fasc-ant'
+  | 'fasc-post'
+  | 'fasc-link'
+  | 'atria-pace'
+  | 'paced-l'
+  | 'bv-r'
+  | 'bv-l'
+  | 'his-pace';
 
-export type SiteId = 'sa' | 'ectopic' | 'junction' | 'ventricle';
+export type SiteId = 'sa' | 'ectopic' | 'junction' | 'ventricle' | 'pace-a' | 'pace-v' | 'pace-lv' | 'pace-his';
 
 /** One thing that happens on the conduction diagram at a given rhythm time. */
 export type Pulse =
@@ -36,7 +47,7 @@ export type Mark =
   | { kind: 'note'; t: number; text: string; tone: Tone }
   | { kind: 'seg'; t0: number; t1: number; tone: Tone };
 
-export type BeatOrigin = 'sinus' | 'pac' | 'tachy' | 'conducted' | 'junctional' | 'ventricular';
+export type BeatOrigin = 'sinus' | 'pac' | 'tachy' | 'conducted' | 'junctional' | 'ventricular' | 'paced';
 
 export interface BeatEvent {
   /** QRS onset. */
@@ -49,7 +60,7 @@ export interface BeatEvent {
   customQrs?: boolean;
 }
 
-export type AtrialKind = 'sinus' | 'ectopic' | 'flutter' | 'retro';
+export type AtrialKind = 'sinus' | 'ectopic' | 'flutter' | 'retro' | 'paced';
 
 export interface AtrialEvent {
   /** Onset of the atrial deflection. */

@@ -41,3 +41,6 @@ export function sequence(specs: SceneSpec[]): LessonScene[] {
 export function rhythmTime(window: number, span: readonly [number, number], progress: number): number {
   return (span[0] + (span[1] - span[0]) * progress) * window;
 }
+
+/** A scene span written in seconds of rhythm time instead of fractions of the strip. */
+export const secs = (window: number, from: number, to: number): readonly [number, number] => [from / window, to / window];

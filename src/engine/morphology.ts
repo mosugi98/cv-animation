@@ -126,6 +126,35 @@ export function flutterSaw(t: number, first: number, cycle: number, amp = 0.17):
   return (shape(t - d) + shape(t) + shape(t + d)) / 3;
 }
 
+/**
+ * Pacemaker output spike: a one-sample-wide vertical line. The tent is wider than the strip's 5 ms sample step, so
+ * it is never missed whatever its alignment.
+ */
+export const spike = (t: number, at: number, amp = 0.6): number => amp * Math.max(0, 1 - Math.abs(t - at) / 0.008);
+
+/**
+ * Left bundle branch block, as seen in a lateral lead (I or V6): broad, notched R wave of 140-160 ms with no
+ * septal q wave. The discordant ST-T comes from the wide-beat T wave.
+ */
+export function qrsLbbb(t: number, q: number): number {
+  return gauss(t, q + 0.045, 0.018, 0.62) + gauss(t, q + 0.105, 0.021, 0.8) + gauss(t, q + 0.155, 0.014, -0.08);
+}
+
+/**
+ * Small r, deep S (rS) in 90-110 ms: lead II in left anterior fascicular block, lead I in left posterior fascicular
+ * block. The initial small r keeps the QRS narrow, but the main vector now points away from the lead.
+ */
+export function qrsRs(t: number, q: number, r = 0.26, s = 0.78): number {
+  return gauss(t, q + 0.018, 0.008, r) + gauss(t, q + 0.055, 0.014, -s) + gauss(t, q + 0.098, 0.012, 0.06);
+}
+
+/** A burst of high-frequency noise (muscle potentials) lasting `len` seconds from `t0`, which a pacemaker may wrongly sense. */
+export function noiseBurst(t: number, t0: number, len = 0.14, amp = 0.16): number {
+  if (t < t0 || t > t0 + len) return 0;
+  const edge = Math.sin((Math.PI * (t - t0)) / len);
+  return amp * edge * Math.sin(2 * Math.PI * 38 * (t - t0)) * (0.7 + 0.3 * Math.sin(2 * Math.PI * 71 * t));
+}
+
 /** Coarse, irregular fibrillatory baseline: no two cycles alike, no flat segment. */
 export function fibWavelets(t: number, amp = 0.06): number {
   const parts: [number, number, number, number][] = [

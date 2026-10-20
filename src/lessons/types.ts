@@ -16,7 +16,21 @@ export type LessonId =
   | 'torsades'
   | 'vf'
   | 'hypokalemia'
-  | 'hyperkalemia';
+  | 'hyperkalemia'
+  | 'av1'
+  | 'avm1'
+  | 'avm2'
+  | 'avhigh'
+  | 'av3'
+  | 'sinoblock'
+  | 'sinusarrest'
+  | 'sss'
+  | 'lbbb'
+  | 'rbbb'
+  | 'fascicular'
+  | 'pacemaker'
+  | 'pacing-physio'
+  | 'pacing-fault';
 
 /** One caption-synchronised step of a lesson. */
 export interface LessonScene extends TimedScene {
@@ -77,6 +91,10 @@ export interface DiagramConfig {
   ventricleCircuit?: boolean;
   /** Label the left and right bundle branches. */
   bundleLabels?: boolean;
+  /** Draw the left bundle as anterior and posterior fascicles instead of one branch. */
+  fascicles?: boolean;
+  /** Draw a pacemaker generator with the chosen leads. */
+  pacemaker?: { atrial?: boolean; rv?: boolean; lv?: boolean; his?: boolean };
 }
 
 export interface LessonBuild {
@@ -97,6 +115,8 @@ export interface Lesson {
   options?: LessonOption[];
   defaultOption?: string;
   diagram: DiagramConfig;
+  /** Diagram for the chosen option, when it differs from `diagram` (for example which pacemaker leads to draw). */
+  diagramFor?: (option?: string) => DiagramConfig;
   legend: LegendItem[];
   /** Rhythm drawn as the preview on the index card. */
   previewKey: string;

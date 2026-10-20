@@ -5,7 +5,7 @@ import { LessonView } from '../src/components/library/LessonView';
 import { LibraryIndex } from '../src/components/library/LibraryIndex';
 import { SiteNav } from '../src/components/library/SiteNav';
 import { LevelMeter, potassiumBand } from '../src/components/library/LevelMeter';
-import { LESSONS, buildLesson, getLesson } from '../src/lessons';
+import { GROUPS, LESSONS, buildLesson, getLesson } from '../src/lessons';
 import { hrefFor, parseRoute } from '../src/lib/route';
 
 const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/&#x27;|&#39;/g, "'").replace(/\s+/g, ' ');
@@ -13,9 +13,10 @@ const variants = LESSONS.flatMap((lesson) => (lesson.options ?? [{ id: undefined
 
 describe('hash routes', () => {
   it('parses every page', () => {
-    expect(parseRoute('')).toEqual({ page: 'heart-block' });
-    expect(parseRoute('#/')).toEqual({ page: 'heart-block' });
-    expect(parseRoute('#/something-else')).toEqual({ page: 'heart-block' });
+    // The standalone heart-block page is gone: the bare address and old links open the library.
+    expect(parseRoute('')).toEqual({ page: 'library' });
+    expect(parseRoute('#/')).toEqual({ page: 'library' });
+    expect(parseRoute('#/something-else')).toEqual({ page: 'library' });
     expect(parseRoute('#/library')).toEqual({ page: 'library' });
     expect(parseRoute('#/library/')).toEqual({ page: 'library' });
     expect(parseRoute('#/library/af')).toEqual({ page: 'lesson', id: 'af', option: null });
@@ -24,7 +25,6 @@ describe('hash routes', () => {
 
   it('round-trips through hrefFor', () => {
     for (const r of [
-      { page: 'heart-block' as const },
       { page: 'library' as const },
       { page: 'lesson' as const, id: 'flutter', option: '4:1' },
       { page: 'lesson' as const, id: 'af', option: null },
@@ -49,17 +49,28 @@ describe('library index', () => {
     expect(text(html)).toContain('schematic educational examples');
   });
 
+  it('lists AV block, the other conduction disorders and pacemakers inside the library', () => {
+    const t = text(html);
+    for (const title of ['Sinus node disorders', 'AV block', 'Bundle branch and fascicular block', 'Pacemakers']) expect(t).toContain(title);
+    for (const l of ['Mobitz I (Wenckebach)', 'Complete heart block', 'SA block', 'Left bundle branch block', 'Pacemaker modes', 'Pacemaker malfunction']) {
+      expect(t).toContain(l);
+    }
+  });
+
   it('has one h1 and headed groups', () => {
     expect(html.match(/<h1/g)).toHaveLength(1);
-    expect(html.match(/<h2/g)).toHaveLength(6);
+    expect(html.match(/<h2/g)).toHaveLength(GROUPS.length);
+    expect(GROUPS).toHaveLength(10);
     expect(text(html)).toContain(`${LESSONS.length} short animated lessons`);
   });
 });
 
 describe('site navigation', () => {
   it('marks the current page', () => {
-    const a = renderToString(<SiteNav route={{ page: 'heart-block' }} />);
-    expect(a).toMatch(/aria-current="page"[^>]*>Heart block/);
+    const a = renderToString(<SiteNav route={{ page: 'library' }} />);
+    expect(a).toMatch(/aria-current="page"[^>]*>\s*Arrhythmia library/);
+    expect(a).not.toContain('Heart block');
+    expect(a.match(/<a /g)).toHaveLength(1);
     const b = renderToString(<SiteNav route={{ page: 'lesson', id: 'af', option: null }} />);
     expect(b).not.toMatch(/aria-current="page"/);
     expect(b).toContain('aria-current="true"');
@@ -125,10 +136,11 @@ describe('option pickers', () => {
 });
 
 describe('Root', () => {
-  it('renders the heart-block page by default (server render has no hash)', () => {
+  it('renders the library by default (server render has no hash), with no separate heart-block page', () => {
     const html = renderToString(<Root />);
     expect(html).toContain('site-nav');
-    expect(html).toContain('Heart block animation');
+    expect(text(html)).toContain(`${LESSONS.length} short animated lessons`);
+    expect(html).not.toContain('Heart block animation');
   });
 });
 
@@ -154,7 +166,7 @@ describe('potassium meter', () => {
       const html = renderToString(<LessonView lesson={getLesson(id)!} option={undefined} />);
       expect(html).toContain('level-meter');
     }
-    for (const id of ['pvc', 'vt', 'wpw', 'aberrancy', 'torsades', 'vf', 'af']) {
+    for (const id of LESSONS.map((l) => l.id).filter((x) => !['hypokalemia', 'hyperkalemia'].includes(x))) {
       const html = renderToString(<LessonView lesson={getLesson(id)!} option={undefined} />);
       expect(html).not.toContain('level-meter');
     }
@@ -168,5 +180,32 @@ describe('potassium meter', () => {
     expect(ab).toContain('right bundle');
     const pvc = renderToString(<LessonView lesson={getLesson('pvc')!} option={undefined} />);
     expect(pvc).not.toContain('dg-circuit');
+  });
+
+  it('draws the fascicles for the fascicular lesson and the pacemaker generator with its leads', () => {
+    const fa = renderToString(<LessonView lesson={getLesson('fascicular')!} option="lafb" />);
+    expect(fa).toContain('anterior');
+    expect(fa).toContain('posterior');
+    const av = renderToString(<LessonView lesson={getLesson('av3')!} option="junctional" />);
+    expect(av).not.toContain('posterior');
+    expect(av).not.toContain('dg-device');
+    const pm = renderToString(<LessonView lesson={getLesson('pacemaker')!} option="vvi" />);
+    expect(pm).toContain('dg-device');
+    expect(pm).toContain('dg-lead');
+    // The drawing follows the option: one lead for RV or His-area pacing, two for biventricular, atrial only for AAI.
+    const leads = (id: string, option: string) => (renderToString(<LessonView lesson={getLesson(id)!} option={option} />).match(/class="dg-lead/g) ?? []).length;
+    expect(leads('pacing-physio', 'rv')).toBe(1);
+    expect(leads('pacing-physio', 'biv')).toBe(2);
+    expect(leads('pacing-physio', 'csp')).toBe(1);
+    expect(leads('pacemaker', 'aai')).toBe(1);
+    expect(leads('pacemaker', 'vvi')).toBe(1);
+    expect(leads('pacemaker', 'ddd')).toBe(2);
+    expect(leads('pacing-fault', 'capture')).toBe(1);
+    const junc = renderToString(<LessonView lesson={getLesson('av3')!} option="junctional" />);
+    const vent = renderToString(<LessonView lesson={getLesson('av3')!} option="ventricular" />);
+    expect(junc).not.toContain('ventricular focus');
+    expect(vent).toContain('ventricular focus');
+    const sinus = renderToString(<LessonView lesson={getLesson('sss')!} option="brady" />);
+    expect(sinus).not.toContain('dg-device');
   });
 });

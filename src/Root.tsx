@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import App from './App';
 import { LessonView } from './components/library/LessonView';
 import { LibraryIndex } from './components/library/LibraryIndex';
 import { SiteNav } from './components/library/SiteNav';
@@ -8,8 +7,6 @@ import { useRoute, type Route } from './lib/route';
 
 export function titleFor(route: Route): string {
   switch (route.page) {
-    case 'heart-block':
-      return 'Heart block: where the gate fails';
     case 'library':
       return 'Arrhythmia Animation Library';
     case 'lesson':
@@ -45,7 +42,6 @@ export default function Root() {
   return (
     <>
       <SiteNav route={route} />
-      {route.page === 'heart-block' && <App />}
       {route.page === 'library' && <LibraryIndex />}
       {route.page === 'lesson' && (lesson ? <LessonView lesson={lesson} option={route.option} /> : <NotFound />)}
     </>

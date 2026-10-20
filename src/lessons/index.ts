@@ -1,15 +1,19 @@
 import { aberrancyLesson } from './aberrancy';
 import { afLesson } from './af';
 import { atLesson } from './at';
+import { avCompleteLesson, avFirstLesson, avHighLesson, avMobitz1Lesson, avMobitz2Lesson } from './avblock';
 import { avnrtLesson } from './avnrt';
 import { avrtLesson } from './avrt';
+import { fascicularLesson, lbbbLesson, rbbbLesson } from './bundle';
 import { flutterLesson } from './flutter';
 import { hyperkalemiaLesson } from './hyperkalemia';
 import { hypokalemiaLesson } from './hypokalemia';
 import { junctionalLesson } from './junctional';
+import { faultLesson, pacemakerLesson, physioLesson } from './pacemaker';
 import { pvcLesson } from './pvc';
+import { saBlockLesson, sinusArrestLesson, sssLesson } from './sinusnode';
 import { torsadesLesson } from './torsades';
-import type { Lesson, LessonBuild, LessonGroup, LessonId } from './types';
+import type { DiagramConfig, Lesson, LessonBuild, LessonGroup, LessonId } from './types';
 import { ventricularLesson } from './ventricular';
 import { vfLesson } from './vf';
 import { vtLesson } from './vt';
@@ -23,8 +27,22 @@ export const LESSONS: Lesson[] = [
   afLesson,
   flutterLesson,
   atLesson,
+  sssLesson,
+  saBlockLesson,
+  sinusArrestLesson,
+  avFirstLesson,
+  avMobitz1Lesson,
+  avMobitz2Lesson,
+  avHighLesson,
+  avCompleteLesson,
+  lbbbLesson,
+  rbbbLesson,
+  fascicularLesson,
   junctionalLesson,
   ventricularLesson,
+  pacemakerLesson,
+  physioLesson,
+  faultLesson,
   pvcLesson,
   vtLesson,
   torsadesLesson,
@@ -54,10 +72,34 @@ export const GROUPS: LessonGroup[] = [
     lessons: ['af', 'flutter', 'at'],
   },
   {
+    id: 'sinus-node',
+    title: 'Sinus node disorders',
+    blurb: 'The natural pacemaker fires too slowly, fails to exit, or stops: from sick sinus syndrome to sinoatrial block and arrest.',
+    lessons: ['sss', 'sinoblock', 'sinusarrest'],
+  },
+  {
+    id: 'av-block',
+    title: 'AV block',
+    blurb: 'Delay or failure of conduction between the atria and ventricles, from a long PR interval to complete dissociation.',
+    lessons: ['av1', 'avm1', 'avm2', 'avhigh', 'av3'],
+  },
+  {
+    id: 'bundle-branch',
+    title: 'Bundle branch and fascicular block',
+    blurb: 'Block below the His bundle: the QRS widens, or its axis shifts, while the atria and AV node carry on as usual.',
+    lessons: ['lbbb', 'rbbb', 'fascicular'],
+  },
+  {
     id: 'escape',
     title: 'Escape rhythms',
     blurb: 'Backup pacemakers that take over after a pause. They arrive late, never early.',
     lessons: ['junctional', 'ventricular'],
+  },
+  {
+    id: 'pacemakers',
+    title: 'Pacemakers',
+    blurb: 'What each pacing mode, pacing site and device fault looks like on the ECG.',
+    lessons: ['pacemaker', 'pacing-physio', 'pacing-fault'],
   },
   {
     id: 'ventricular-arrhythmias',
@@ -77,6 +119,11 @@ export const isLessonId = (s: string): s is LessonId => LESSONS.some((l) => l.id
 
 export function getLesson(id: string): Lesson | undefined {
   return LESSONS.find((l) => l.id === id);
+}
+
+/** The conduction diagram to draw for a lesson option. */
+export function diagramOf(lesson: Lesson, option?: string | null): DiagramConfig {
+  return lesson.diagramFor ? lesson.diagramFor(resolveOption(lesson, option)) : lesson.diagram;
 }
 
 /** Resolves an option id, falling back to the lesson default (or undefined for lessons without options). */

@@ -1,5 +1,3 @@
-import { SCENES } from '../data/scenes';
-
 interface SceneRef {
   id: string;
   title: string;
@@ -7,8 +5,8 @@ interface SceneRef {
 }
 
 interface Props {
-  /** Scenes to navigate; defaults to the heart-block scenes. */
-  scenes?: readonly SceneRef[];
+  /** Scenes to navigate. */
+  scenes: readonly SceneRef[];
   time: number;
   duration: number;
   playing: boolean;
@@ -24,7 +22,7 @@ interface Props {
 const fmt = (s: number) => `${s.toFixed(1)} s`;
 
 export function TimelineControls(p: Props) {
-  const scenes: readonly SceneRef[] = p.scenes ?? SCENES;
+  const scenes = p.scenes;
   const scene = scenes[p.sceneIndex];
   return (
     <section className="controls" aria-label="Playback controls">

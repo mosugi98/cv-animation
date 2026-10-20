@@ -21,6 +21,20 @@ export const PATHS: Record<PathId, Point[]> = {
   'vent-loop': [[100, 150], [298, 150], [298, 180], [100, 180], [100, 150]],
   'vent-l': [[232, 164], [90, 164]],
   'vent-r': [[232, 164], [300, 164]],
+  // Right bundle to the left ventricle through muscle (LBBB), and the reverse (RBBB).
+  'cross-l': [[250, 166], [100, 166]],
+  'cross-r': [[130, 166], [296, 166]],
+  // Left bundle split into anterior and posterior fascicles.
+  'lbb-trunk': [[190, 128], [160, 142]],
+  'fasc-ant': [[160, 142], [122, 146], [96, 152]],
+  'fasc-post': [[160, 142], [148, 166], [130, 180]],
+  'fasc-link': [[130, 180], [96, 152]],
+  // Pacemaker: atrial output to the AV node, right-ventricular apical spread, biventricular and His-area output.
+  'atria-pace': [[118, 40], [154, 48], [190, 56]],
+  'paced-l': [[268, 170], [100, 170]],
+  'bv-r': [[268, 170], [190, 168]],
+  'bv-l': [[112, 172], [190, 168]],
+  'his-pace': [[196, 118], [190, 128]],
 };
 
 export const SITES: Record<SiteId, Point> = {
@@ -28,6 +42,10 @@ export const SITES: Record<SiteId, Point> = {
   ectopic: [262, 30],
   junction: [190, 84],
   ventricle: [232, 160],
+  'pace-a': [118, 40],
+  'pace-v': [268, 170],
+  'pace-lv': [112, 172],
+  'pace-his': [196, 118],
 };
 
 /** Seconds a dot lingers (fading) after it reaches the end of its path. */
@@ -91,8 +109,10 @@ export interface DiagramFrame {
   ventricles: Glow | null;
 }
 
-const ATRIAL_PATHS: PathId[] = ['atria-sa', 'atria-ect', 'atria-retro', 'atria-ap', 'flutter-loop'];
-const VENTRICULAR_PATHS: PathId[] = ['bb-left', 'bb-right', 'vent-l', 'vent-r'];
+const ATRIAL_PATHS: PathId[] = ['atria-sa', 'atria-ect', 'atria-retro', 'atria-ap', 'flutter-loop', 'atria-pace'];
+const VENTRICULAR_PATHS: PathId[] = [
+  'bb-left', 'bb-right', 'vent-l', 'vent-r', 'cross-l', 'cross-r', 'lbb-trunk', 'fasc-ant', 'fasc-post', 'fasc-link', 'paced-l', 'bv-r', 'bv-l', 'his-pace',
+];
 /** Spark and loop positions below this y are in the ventricles. */
 const VENTRICLE_TOP = 138;
 
@@ -138,8 +158,8 @@ export function frameAt(pulses: Pulse[], rt: number): DiagramFrame {
       const opacity = 1 - age / RING_LIFE;
       frame.rings.push({ x, y, tone: p.tone, opacity, radius: 5 + (age / RING_LIFE) * 16 });
       const glow: Glow = { tone: p.tone, opacity: opacity * 0.4 };
-      if (p.site === 'sa' || p.site === 'ectopic') frame.atria = strongest(frame.atria, glow);
-      if (p.site === 'ventricle') frame.ventricles = strongest(frame.ventricles, glow);
+      if (p.site === 'sa' || p.site === 'ectopic' || p.site === 'pace-a') frame.atria = strongest(frame.atria, glow);
+      if (p.site === 'ventricle' || p.site === 'pace-v' || p.site === 'pace-lv' || p.site === 'pace-his') frame.ventricles = strongest(frame.ventricles, glow);
     } else {
       const age = rt - p.t;
       if (age < 0 || age > SPARK_LIFE) continue;

@@ -8,6 +8,7 @@
   --blue: #1d4ed8;
   --red: #c62828;
   --purple: #6d28d9;
+  --teal: #0f766e;
   --orange-l: #fb923c;
   --blue-l: #60a5fa;
   --red-l: #f87171;
@@ -17,7 +18,6 @@
   --anatomy: #cbbfa8;
   --dark: #161b2b;
 }
-
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
@@ -30,13 +30,11 @@ body {
   position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
-
 .accent-navy { color: var(--navy); }
 .accent-orange { color: var(--orange); }
 .accent-blue { color: var(--blue); }
 .accent-red { color: var(--red); }
 .accent-purple { color: var(--purple); }
-
 .page { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 14px 12px 32px; }
 
 /* Stage: 9:16 composition */
@@ -53,60 +51,21 @@ body {
   box-shadow: 0 1px 2px rgba(27, 34, 54, 0.06);
   padding: 8px 10px;
 }
-.stage--hook, .stage--end { justify-content: flex-start; }
-
-.headline { margin: 18px 2px 8px; font-size: clamp(26px, 8vw, 34px); line-height: 1.15; font-weight: 700; }
-.headline--ghost { opacity: 0.18; }
-
-.lesson-title {
-  align-self: center; margin: 12px 0 0; padding: 7px 16px;
-  background: var(--navy); color: #fff; border-radius: 999px;
-  font-size: 15px; font-weight: 650;
-}
-
-/* Stage pills */
-.pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; list-style: none; margin: 0; padding: 0; }
-.pill {
-  text-align: center; padding: 6px 2px; border-radius: 999px;
-  font-size: 11px; font-weight: 650; white-space: nowrap;
-  background: #ece4d3; color: var(--soft);
-}
-.pill.is-active { color: #fff; }
-.pill--orange.is-active { background: var(--orange); }
-.pill--red.is-active { background: var(--red); }
-.pill--purple.is-active { background: var(--purple); }
 
 /* Diagram */
 .diagram, .strip { display: block; width: 100%; height: auto; }
 .dg-row { font-size: 10.5px; fill: var(--navy); }
 .dg-atria { fill: var(--atria); stroke: var(--anatomy); stroke-width: 1.5; }
 .dg-vent { fill: var(--vent); stroke: var(--anatomy); stroke-width: 1.5; }
-.dg-vent-escape { fill: var(--purple); }
 .dg-path { stroke: var(--anatomy); stroke-width: 2; stroke-linecap: round; }
 .dg-node { fill: #fff; stroke: var(--anatomy); stroke-width: 2.5; }
-.dg-node-dot { fill: var(--blue); }
 .dg-sinus { fill: var(--blue); }
-.dg-sinus-label { font-size: 8.5px; fill: var(--soft); }
-.dg-signal { fill: var(--blue); stroke: #fff; stroke-width: 1.5; }
-.dg-block-ring { fill: none; stroke: var(--red); stroke-width: 2; }
-.dg-block-bar { stroke: var(--red); stroke-width: 3; stroke-linecap: round; }
-.dg-block-bar--thick { stroke-width: 4; }
-.dg-escape { fill: var(--purple); stroke: #fff; stroke-width: 1.5; }
-.dg-note { font-size: 7.5px; fill: var(--soft); text-anchor: end; }
 
 /* ECG strip */
 .grid-line { stroke: #eee6d6; }
 .trace { fill: none; stroke: var(--navy); stroke-width: 1.3; stroke-linejoin: round; stroke-linecap: round; }
-.trace--escape { stroke: var(--purple); stroke-width: 1.6; }
-.prbar { stroke: var(--orange); stroke-linecap: round; }
-.pdot--ok { fill: var(--blue); }
-.pdot--drop { fill: var(--red); }
 .head { fill: var(--navy); opacity: 0.85; }
 .tag-line { stroke: var(--anatomy); stroke-width: 0.8; }
-.badge--orange { fill: var(--orange); }
-.badge--red { fill: var(--red); }
-.badge--purple { fill: var(--purple); }
-.badge--blue { fill: var(--blue); }
 .badge-text { fill: #fff; font-size: 7px; font-weight: 700; text-anchor: middle; }
 
 /* Caption */
@@ -114,37 +73,7 @@ body {
 .caption__title { margin: 0; font-size: clamp(17px, 5vw, 21px); font-weight: 700; line-height: 1.25; }
 .caption__sub { margin: 6px 0 0; font-size: clamp(14px, 4vw, 16px); font-weight: 600; line-height: 1.3; }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-
 .note { text-align: center; }
-.note__main { margin: 4px 0; font-size: 20px; font-weight: 700; color: var(--red); }
-.note__sub { margin: 0 0 4px; font-size: 14px; }
-
-/* Recap (dark) */
-.recap { background: var(--dark); border-radius: 18px; padding: 12px; color: #e8edf5; }
-.recap__badge {
-  margin: 0 auto 10px; width: fit-content; padding: 4px 10px; border-radius: 999px;
-  border: 1px solid #38405a; font-size: 9.5px; letter-spacing: 0.04em; color: #c7cfe0;
-}
-.recap__row { margin-bottom: 6px; }
-.recap__head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.recap__label { font-size: 12px; font-weight: 700; }
-.recap__note { font-size: 10.5px; color: #c7cfe0; }
-.recap .accent-orange { color: var(--orange-l); }
-.recap .accent-red { color: var(--red-l); }
-.recap .accent-purple { color: var(--purple-l); }
-.recap .trace { stroke: #e8edf5; }
-.recap .trace--escape { stroke: var(--purple-l); }
-.recap .grid-line { stroke: #232a3f; }
-.recap .pdot--ok { fill: var(--blue-l); }
-.recap .pdot--drop { fill: var(--red-l); }
-.recap .prbar { stroke: var(--orange-l); }
-
-/* End card */
-.endcard { text-align: center; padding: 40px 20px; margin-top: 24px; }
-.endcard__icon { width: 34px; height: 44px; fill: var(--red); }
-.endcard__title { margin: 10px 0 0; font-size: 32px; font-weight: 700; }
-.endcard__sub { margin: 4px 0 14px; font-size: 20px; font-weight: 600; color: var(--blue); }
-.endcard__note { margin: 0; font-size: 14px; color: var(--soft); }
 
 /* Controls */
 .controls { width: min(100%, 420px); display: flex; flex-direction: column; gap: 10px; }
@@ -166,20 +95,16 @@ body {
 .btn:focus-visible, .scene-btn:focus-visible, .scrubber:focus-visible, .toggle input:focus-visible {
   outline: 3px solid var(--blue); outline-offset: 2px;
 }
-
-.footer { width: min(100%, 420px); display: flex; flex-direction: column; gap: 8px; }
 .toggle { display: flex; align-items: center; gap: 8px; font-size: 14px; min-height: 32px; }
 .toggle input { width: 18px; height: 18px; }
-.disclaimer { margin: 0; font-size: 12px; color: var(--soft); }
-
 @media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
+* { animation: none !important; transition: none !important; }
 }
 .is-reduced * { animation: none !important; transition: none !important; }
 
 /* Desktop: stage on the left, controls beside it so nothing falls below the fold */
 @media (min-width: 900px) {
-  .page {
+.page {
     display: grid;
     grid-template-columns: 420px 380px;
     grid-template-rows: auto 1fr;
@@ -190,9 +115,8 @@ body {
     align-items: start;
     padding: 16px 12px;
   }
-  .stage { grid-area: stage; width: 420px; }
-  .controls { grid-area: controls; width: 100%; }
-  .footer { grid-area: footer; width: 100%; }
+.stage { grid-area: stage; width: 420px; }
+.controls { grid-area: controls; width: 100%; }
 }
 
 /* ===== Arrhythmia Animation Library ===== */
@@ -201,6 +125,8 @@ body {
 .tone-orange { --c: var(--orange); }
 .tone-red { --c: var(--red); }
 .tone-purple { --c: var(--purple); }
+.tone-teal { --c: var(--teal); }
+.accent-teal { color: var(--teal); }
 
 /* Site navigation */
 .site-nav { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
@@ -299,26 +225,26 @@ body {
 
 /* Phones and tablets: playback controls stay reachable at the bottom while the animation scrolls */
 @media (max-width: 899px) {
-  .lib-side {
+.lib-side {
     position: sticky; bottom: 0; z-index: 4; margin: 0 -16px; padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
     background: var(--bg); border-top: 1px solid var(--line);
   }
-  .lib-side .controls { gap: 6px; }
-  .lib-stage .diagram { max-height: 210px; }
-  .lib-side .scene-btn { min-height: 44px; min-width: 44px; }
+.lib-side .controls { gap: 6px; }
+.lib-stage .diagram { max-height: 210px; }
+.lib-side .scene-btn { min-height: 44px; min-width: 44px; }
 }
 @media (min-width: 900px) {
-  .lib-page { padding: 20px 24px 48px; }
-  .lib-player { display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-areas: 'stage side' 'stage toggle'; gap: 12px 28px; align-items: start; }
-  .lib-stage { grid-area: stage; max-width: 680px; }
-  .lib-side { grid-area: side; position: sticky; top: 72px; }
-  .lib-toggle { grid-area: toggle; }
+.lib-page { padding: 20px 24px 48px; }
+.lib-player { display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-areas: 'stage side' 'stage toggle'; gap: 12px 28px; align-items: start; }
+.lib-stage { grid-area: stage; max-width: 680px; }
+.lib-side { grid-area: side; position: sticky; top: 72px; }
+.lib-toggle { grid-area: toggle; }
 }
 @media (max-width: 600px) {
-  .lib-page:not(.lib-index) .lib-lede { display: none; }
+.lib-page:not(.lib-index) .lib-lede { display: none; }
 }
 @media (max-width: 420px) {
-  .summary__row { grid-template-columns: 1fr; gap: 2px; }
+.summary__row { grid-template-columns: 1fr; gap: 2px; }
 }
 
 /* Potassium level meter */
@@ -329,6 +255,13 @@ body {
 .level-meter__normal { position: absolute; top: 0; bottom: 0; border-radius: 6px; background: color-mix(in srgb, var(--blue) 35%, transparent); }
 .level-meter__marker { position: absolute; top: -3px; width: 6px; height: 18px; margin-left: -3px; border-radius: 3px; background: var(--c); transition: left 0.5s ease, background-color 0.3s; }
 .level-meter__ticks { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--soft); }
-@media (prefers-reduced-motion: reduce) { .level-meter__marker { transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+.level-meter__marker { transition: none; } }
 .is-reduced .level-meter__marker { transition: none; }
 .level-meter__head strong.tone-orange { color: var(--orange-ink, #a34608); }
+
+/* Pacemaker leads */
+.dg-lead { fill: none; stroke: var(--teal); stroke-width: 1.3; stroke-linejoin: round; opacity: 0.8; }
+.dg-tip { fill: var(--teal); stroke: #fff; stroke-width: 1; }
+.dg-device { fill: #fff; stroke: var(--teal); stroke-width: 1.5; }
+.dg-device-text { fill: var(--teal); font-weight: 700; }

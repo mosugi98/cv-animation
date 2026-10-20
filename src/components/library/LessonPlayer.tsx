@@ -3,7 +3,7 @@ import { frameAt, type DiagramFrame } from '../../engine/diagram';
 import { durationOf, sceneIndexIn, sceneProgressIn, stepSceneIn } from '../../engine/timeline';
 import { usePlayback } from '../../hooks/usePlayback';
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
-import { buildLesson } from '../../lessons';
+import { buildLesson, diagramOf } from '../../lessons';
 import { rhythmTime } from '../../lessons/sequence';
 import type { Lesson } from '../../lessons/types';
 import { SceneCaption } from '../SceneCaption';
@@ -52,7 +52,7 @@ export function LessonPlayer({ lesson, option, initialTime = 0, forceReduced = f
           <>
             {scene.meter !== undefined && <LevelMeter value={scene.meter} />}
             <div className="card card--diagram">
-              <ActivationDiagram config={lesson.diagram} frame={frame} description={`${scene.title} ${scene.sub}`} />
+              <ActivationDiagram config={diagramOf(lesson, option)} frame={frame} description={`${scene.title} ${scene.sub}`} />
             </div>
             <div className="card card--strip">
               <p className="strip-label">{rhythm.label}</p>

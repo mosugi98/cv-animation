@@ -1,0 +1,21 @@
+Delete these files from the repository after uploading the update. They belonged to the old stand-alone
+"Heart block" page. If any is left behind, the build fails (App.tsx no longer type-checks).
+In the GitHub web UI: open each file, use the "..." menu, then "Delete file". Or on a computer with git:
+  xargs git rm < REMOVE-THESE-FILES.txt
+
+src/App.tsx
+src/components/ConductionDiagram.tsx
+src/components/ECGStrip.tsx
+src/components/EndCard.tsx
+src/components/RecapPanel.tsx
+src/components/StagePills.tsx
+src/data/rhythms.ts
+src/data/scenes.ts
+src/lib/signal.ts
+src/lib/timeline.ts
+src/lib/waveform.ts
+tests/render.test.tsx
+tests/rhythms.test.ts
+tests/signal.test.ts
+tests/timeline.test.ts
+tests/waveform.test.ts

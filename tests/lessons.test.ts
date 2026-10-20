@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { durationOf, sceneIndexIn, sceneProgressIn } from '../src/engine/timeline';
 import { GROUPS, LESSONS, buildLesson, getLesson, isLessonId, resolveOption } from '../src/lessons';
+import {
+  CAPTURE_SPIKES, OUTPUT_ESCAPES, OUTPUT_MISSING, OVERSENSE_NOISE, SENSED_AV, UNDERSENSE_SPIKES, vddScript,
+} from '../src/rhythms/pacing';
 import { rhythmTime } from '../src/lessons/sequence';
 import type { Lesson, LessonScene } from '../src/lessons/types';
 
@@ -14,12 +17,29 @@ const variants: Variant[] = LESSONS.flatMap((lesson): Variant[] =>
 );
 
 describe('lesson registry', () => {
-  it('has the fifteen lessons with unique ids', () => {
+  it('has the twenty-nine lessons with unique ids, in teaching order', () => {
     expect(LESSONS.map((l) => l.id)).toEqual([
-      'avnrt', 'avrt', 'wpw', 'aberrancy', 'af', 'flutter', 'at', 'junctional', 'ventricular',
+      'avnrt', 'avrt', 'wpw', 'aberrancy', 'af', 'flutter', 'at',
+      'sss', 'sinoblock', 'sinusarrest',
+      'av1', 'avm1', 'avm2', 'avhigh', 'av3',
+      'lbbb', 'rbbb', 'fascicular',
+      'junctional', 'ventricular',
+      'pacemaker', 'pacing-physio', 'pacing-fault',
       'pvc', 'vt', 'torsades', 'vf', 'hypokalemia', 'hyperkalemia',
     ]);
-    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(15);
+    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(29);
+  });
+
+  it('groups the conduction lessons by topic, with AV block inside the library', () => {
+    const g = (id: string) => GROUPS.find((x) => x.id === id)?.lessons;
+    expect(g('sinus-node')).toEqual(['sss', 'sinoblock', 'sinusarrest']);
+    expect(g('av-block')).toEqual(['av1', 'avm1', 'avm2', 'avhigh', 'av3']);
+    expect(g('bundle-branch')).toEqual(['lbbb', 'rbbb', 'fascicular']);
+    expect(g('pacemakers')).toEqual(['pacemaker', 'pacing-physio', 'pacing-fault']);
+    expect(GROUPS.map((x) => x.id)).toEqual([
+      'svt', 'preexcitation', 'atrial', 'sinus-node', 'av-block', 'bundle-branch', 'escape', 'pacemakers',
+      'ventricular-arrhythmias', 'electrolytes',
+    ]);
   });
 
   it('groups the new lessons by topic', () => {
@@ -55,6 +75,27 @@ describe('lesson registry', () => {
     expect(getLesson('vf')!.options!.map((o) => o.id)).toEqual(['coarse', 'fine']);
     expect(getLesson('aberrancy')!.options).toBeUndefined();
     expect(getLesson('hypokalemia')!.options).toBeUndefined();
+    expect(getLesson('avhigh')!.options!.map((o) => o.id)).toEqual(['2to1', '3to1']);
+    expect(getLesson('av3')!.options!.map((o) => o.id)).toEqual(['junctional', 'ventricular']);
+    expect(getLesson('sinoblock')!.options!.map((o) => o.id)).toEqual(['type1', 'type2']);
+    expect(getLesson('sinusarrest')!.options!.map((o) => o.id)).toEqual(['pause', 'escape']);
+    expect(getLesson('sss')!.options!.map((o) => o.id)).toEqual(['tachybrady', 'brady']);
+    expect(getLesson('fascicular')!.options!.map((o) => o.id)).toEqual(['lafb', 'lpfb', 'bifascicular', 'longpr']);
+    expect(getLesson('pacemaker')!.options!.map((o) => o.id)).toEqual(['aai', 'vvi', 'voo', 'vdd', 'ddi', 'ddd']);
+    expect(getLesson('pacing-physio')!.options!.map((o) => o.id)).toEqual(['rv', 'biv', 'csp']);
+    expect(getLesson('pacing-fault')!.options!.map((o) => o.id)).toEqual(['capture', 'undersensing', 'oversensing', 'output']);
+    for (const id of ['av1', 'avm1', 'avm2', 'lbbb', 'rbbb']) expect(getLesson(id)!.options).toBeUndefined();
+  });
+
+  it('never reuses a rhythm id for a different rhythm (strips are cached by id)', () => {
+    const seen = new Map<string, string>();
+    for (const { lesson, option } of variants) {
+      for (const r of Object.values(buildLesson(lesson, option).rhythms)) {
+        const sig = `${r.label}|${r.description}|${r.window}`;
+        expect(seen.get(r.id) ?? sig, r.id).toBe(sig);
+        seen.set(r.id, sig);
+      }
+    }
   });
 
   it('falls back to the default option for unknown values', () => {
@@ -311,5 +352,212 @@ describe('new lessons are synchronised with the events they describe', () => {
       const b = buildLesson(l, l.defaultOption);
       expect(b.scenes.every((s) => s.meter === undefined)).toBe(true);
     }
+  });
+});
+
+
+describe('conduction and pacing lessons are synchronised with the events they describe', () => {
+  const rhythmOf = (id: string, option?: string, key?: string) => {
+    const b = buildLesson(getLesson(id)!, option);
+    return { b, r: key ? b.rhythms[key] : Object.values(b.rhythms)[0] };
+  };
+  const spanOf = (b: { scenes: LessonScene[] }, id: string, w: number) => {
+    const s = b.scenes.find((x) => x.id === id)!;
+    expect(s, `scene ${id}`).toBeDefined();
+    return [s.span[0] * w, s.span[1] * w] as const;
+  };
+  const inside = (b: { scenes: LessonScene[] }, id: string, w: number, t: number) => {
+    const [a, z] = spanOf(b, id, w);
+    expect(t, `${id} should contain ${t}`).toBeGreaterThanOrEqual(a - 1e-9);
+    expect(t, `${id} should contain ${t}`).toBeLessThanOrEqual(z + 1e-9);
+  };
+
+  it('first-degree block: the measuring scene shows a whole P-to-QRS interval', () => {
+    const { b, r } = rhythmOf('av1');
+    inside(b, 'measure', r.window, r.atrial[0].t);
+    inside(b, 'measure', r.window, r.beats[0].t);
+  });
+
+  it('Wenckebach: lengthening scene shows the growing PRs, the drop scene the blocked P, the reset scene the shortest PR', () => {
+    const { b, r } = rhythmOf('avm1');
+    const dropped = r.atrial.find((a) => !a.conducted)!;
+    inside(b, 'drop', r.window, dropped.t);
+    inside(b, 'lengthen', r.window, r.beats[1].t);
+    inside(b, 'lengthen', r.window, r.beats[2].t);
+    const after = r.beats.find((x) => x.t > dropped.t)!;
+    inside(b, 'reset', r.window, after.t);
+  });
+
+  it('Mobitz II: the drop scene shows the blocked P, and the pause scene covers the whole pause', () => {
+    const { b, r } = rhythmOf('avm2');
+    const dropped = r.atrial.find((a) => !a.conducted)!;
+    inside(b, 'drop', r.window, dropped.t);
+    const before = r.beats.filter((x) => x.t < dropped.t).at(-1)!;
+    const after = r.beats.find((x) => x.t > dropped.t)!;
+    inside(b, 'pause', r.window, before.t);
+    inside(b, 'pause', r.window, after.t);
+  });
+
+  it.each(['2to1', '3to1'])('%s block: the ratio scene shows conducted and blocked P waves and names the ratio', (o) => {
+    const { b, r } = rhythmOf('avhigh', o);
+    const [a, z] = spanOf(b, 'ratio', r.window);
+    const inScene = r.atrial.filter((x) => x.t >= a && x.t <= z);
+    expect(inScene.some((x) => x.conducted)).toBe(true);
+    expect(inScene.filter((x) => !x.conducted).length).toBeGreaterThanOrEqual(o === '2to1' ? 1 : 2);
+    expect(b.scenes.find((s) => s.id === 'ratio')!.chip).toContain(o === '2to1' ? '2:1' : '3:1');
+    expect(b.summary.rows.find((x) => x.label === 'Ventricular rate')!.value).toContain(o === '2to1' ? '50' : '33');
+  });
+
+  it.each([
+    ['junctional', false],
+    ['ventricular', true],
+  ])('complete block with a %s escape: the escape scene holds the first escape beat, wide=%s', (o, wide) => {
+    const { b, r } = rhythmOf('av3', o);
+    inside(b, 'escape', r.window, r.beats[0].t);
+    expect(r.beats.every((x) => x.wide === wide)).toBe(true);
+    expect(b.scenes.find((s) => s.id === 'escape')!.chip.toLowerCase()).toContain(o);
+    const [a, z] = spanOf(b, 'dissociation', r.window);
+    expect(r.atrial.filter((x) => x.t >= a && x.t <= z).length).toBeGreaterThanOrEqual(3);
+    expect(r.beats.filter((x) => x.t >= a && x.t <= z).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('SA block: the block scene covers the missing P wave and the pause scene the whole pause', () => {
+    for (const o of ['type1', 'type2']) {
+      const { b, r } = rhythmOf('sinoblock', o);
+      const ps = r.atrial.map((x) => x.t);
+      const gaps = ps.slice(1).map((t, i) => t - ps[i]);
+      const k = gaps.indexOf(Math.max(...gaps));
+      const mid = (ps[k] + ps[k + 1]) / 2;
+      inside(b, o === 'type1' ? 'drop' : 'blocked', r.window, mid);
+      if (o === 'type2') {
+        inside(b, 'pause', r.window, ps[k]);
+        inside(b, 'pause', r.window, ps[k + 1]);
+      }
+    }
+  });
+
+  it('sinus arrest: the stop scene starts before the pause and the pause (or escape) scene contains the late event', () => {
+    const p = rhythmOf('sinusarrest', 'pause');
+    const ps = p.r.atrial.map((x) => x.t);
+    const gaps = ps.slice(1).map((t, i) => t - ps[i]);
+    const k = gaps.indexOf(Math.max(...gaps));
+    inside(p.b, 'stop', p.r.window, (ps[k] + ps[k + 1]) / 2 - 0.5);
+    inside(p.b, 'pause', p.r.window, ps[k]);
+    inside(p.b, 'pause', p.r.window, ps[k + 1]);
+    const e = rhythmOf('sinusarrest', 'escape');
+    const esc = e.r.beats.find((x) => x.origin === 'junctional')!;
+    inside(e.b, 'escape', e.r.window, esc.t);
+  });
+
+  it('sick sinus syndrome: the AF scene holds the fibrillation run, the pause scene its end, the escape scene the first escape beat', () => {
+    const { b, r } = rhythmOf('sss', 'tachybrady');
+    const af = r.beats.filter((x) => x.origin === 'tachy' || (x.t > 1.9 && x.t < 4.0));
+    expect(af.length).toBeGreaterThanOrEqual(4);
+    for (const x of af) inside(b, 'tachy', r.window, x.t);
+    inside(b, 'pause', r.window, af[af.length - 1].t + 0.2);
+    const esc = r.beats.find((x) => x.origin === 'junctional')!;
+    inside(b, 'escape', r.window, esc.t);
+    const br = rhythmOf('sss', 'brady');
+    const e2 = br.r.beats.find((x) => x.origin === 'junctional')!;
+    inside(br.b, 'escape', br.r.window, e2.t);
+  });
+
+  it('bundle branch blocks: only the blocked rhythm is wide, and the ECG scene shows complete QRS complexes', () => {
+    for (const [id, key] of [['lbbb', 'lbbb'], ['rbbb', 'rbbb']] as const) {
+      const { b } = rhythmOf(id);
+      expect(b.rhythms.normal.beats.every((x) => !x.wide)).toBe(true);
+      expect(b.rhythms[key].beats.every((x) => x.wide)).toBe(true);
+      const ecg = b.scenes.find((s) => s.id === 'ecg')!;
+      expect(ecg.rhythm).toBe(key);
+      const r = b.rhythms[key];
+      expect(r.beats.filter((x) => x.t / r.window >= ecg.span[0] && x.t / r.window <= ecg.span[1]).length).toBeGreaterThanOrEqual(2);
+      expect(b.scenes.find((s) => s.id === 'normal')!.rhythm).toBe('normal');
+    }
+  });
+
+  it('fascicular blocks: block scenes show the blocked fascicle; bifascicular variants keep the RBBB pattern', () => {
+    for (const o of ['lafb', 'lpfb', 'bifascicular', 'longpr']) {
+      const { b } = rhythmOf('fascicular', o);
+      const r = b.rhythms.block;
+      expect(r.beats.filter((x) => x.wide).length === r.beats.length).toBe(o === 'bifascicular' || o === 'longpr');
+      const first = b.scenes[1];
+      expect(first.span[0] * r.window).toBeLessThanOrEqual(r.beats[1].t);
+    }
+    const lafb = rhythmOf('fascicular', 'lafb').b;
+    inside(lafb, 'block', 6.4, 0.46 + 0.1);
+    expect(rhythmOf('fascicular', 'longpr').b.summary.rows.find((x) => x.label === 'PR interval')!.value).toContain('280');
+  });
+
+  it('pacemaker modes: key scenes contain the first paced event of their mode', () => {
+    const aai = rhythmOf('pacemaker', 'aai');
+    inside(aai.b, 'paced', aai.r.window, aai.r.atrial.find((x) => x.kind === 'paced')!.t);
+    const vvi = rhythmOf('pacemaker', 'vvi');
+    const vp = vvi.r.beats.find((x) => x.origin === 'paced')!;
+    inside(vvi.b, 'paced', vvi.r.window, vp.t);
+    inside(vvi.b, 'wait', vvi.r.window, vp.t - 0.02);
+    const voo = rhythmOf('pacemaker', 'voo');
+    const spikes = voo.r.pulses.filter((p) => p.type === 'flash' && p.site === 'pace-v').map((p) => (p.type === 'flash' ? p.t : 0));
+    inside(voo.b, 'magnet', voo.r.window, Math.min(...spikes));
+    const wasted = voo.r.pulses.find((p) => p.type === 'travel' && p.path === 'paced-l' && p.tone === 'red')!;
+    if (wasted.type !== 'travel') throw new Error('unreachable');
+    inside(voo.b, 'refractory', voo.r.window, wasted.t0);
+    const vdd = rhythmOf('pacemaker', 'vdd');
+    const untracked = vddScript().atrial.find((x) => !x.tracked)!;
+    inside(vdd.b, 'ignored', vdd.r.window, untracked.t);
+    const lrl = vddScript().vent.find((v) => !vddScript().atrial.some((a) => a.tracked && Math.abs(v.t - (a.t + SENSED_AV)) < 1e-6))!;
+    inside(vdd.b, 'slow', vdd.r.window, lrl.t);
+    const ddi = rhythmOf('pacemaker', 'ddi');
+    inside(ddi.b, 'sequential', ddi.r.window, ddi.r.atrial.find((x) => x.kind === 'paced')!.t);
+    const [a, z] = spanOf(ddi.b, 'timer', ddi.r.window);
+    expect(ddi.r.beats.filter((x) => x.t >= a && x.t <= z).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('DDD: one scene per state with its own rhythm, in the order AS-VP, AP-VP, AP-VS, AS-VS', () => {
+    const { b } = rhythmOf('pacemaker', 'ddd');
+    expect(Object.keys(b.rhythms)).toEqual(['as-vp', 'ap-vp', 'ap-vs', 'as-vs']);
+    expect(b.scenes.slice(0, 4).map((s) => s.rhythm)).toEqual(['as-vp', 'ap-vp', 'ap-vs', 'as-vs']);
+    expect(b.scenes.slice(0, 4).map((s) => s.chip)).toEqual(['1 · AS–VP', '2 · AP–VP', '3 · AP–VS', '4 · AS–VS']);
+    for (const s of b.scenes.slice(0, 4)) {
+      const r = b.rhythms[s.rhythm!];
+      expect(r.beats.filter((x) => x.t / r.window >= s.span[0] && x.t / r.window <= s.span[1]).length).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('pacemaker summaries cover leadless devices, rate response and the magnet response', () => {
+    const text = (o: string) => JSON.stringify(buildLesson(getLesson('pacemaker')!, o).summary).toLowerCase();
+    expect(text('vvi')).toContain('leadless');
+    expect(text('vdd')).toContain('leadless');
+    for (const o of ['aai', 'vvi', 'voo', 'vdd', 'ddi', 'ddd']) expect(text(o)).toContain('rate response');
+    expect(text('voo')).toContain('magnet');
+    expect(text('voo')).toContain('icd');
+    for (const l of ['pacemaker', 'pacing-physio', 'pacing-fault']) {
+      expect(getLesson(l)!.legend.some((x) => x.tone === 'teal')).toBe(true);
+    }
+  });
+
+  it('pacing sites: the QRS scene holds a paced QRS, and the three sites say different things about the QRS', () => {
+    const widths: string[] = [];
+    for (const o of ['rv', 'biv', 'csp']) {
+      const { b, r } = rhythmOf('pacing-physio', o);
+      const [a, z] = spanOf(b, o === 'rv' ? 'wide' : o === 'biv' ? 'meet' : 'narrow', r.window);
+      expect(r.beats.filter((x) => x.t >= a && x.t <= z).length).toBeGreaterThanOrEqual(2);
+      widths.push(b.summary.rows.find((x) => x.label === 'QRS')!.value);
+    }
+    expect(new Set(widths).size).toBe(3);
+  });
+
+  it('pacemaker faults: each fault scene contains the event it names', () => {
+    const cap = rhythmOf('pacing-fault', 'capture');
+    const failed = CAPTURE_SPIKES.find((s) => !s.ok)!;
+    inside(cap.b, 'fail', cap.r.window, failed.t);
+    const under = rhythmOf('pacing-fault', 'undersensing');
+    inside(under.b, 'ignored', under.r.window, UNDERSENSE_SPIKES[0]);
+    const over = rhythmOf('pacing-fault', 'oversensing');
+    inside(over.b, 'noise', over.r.window, OVERSENSE_NOISE[0]);
+    inside(over.b, 'withheld', over.r.window, OVERSENSE_NOISE[0] + 0.2);
+    inside(over.b, 'withheld', over.r.window, OVERSENSE_NOISE[0] + 1.0);
+    const out = rhythmOf('pacing-fault', 'output');
+    inside(out.b, 'stop', out.r.window, OUTPUT_MISSING[0]);
+    inside(out.b, 'escape', out.r.window, OUTPUT_ESCAPES[0]);
   });
 });

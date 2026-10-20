@@ -1,9 +1,9 @@
-import type { Accent } from '../data/scenes';
+import type { Tone } from '../engine/types';
 
 interface Props {
   title: string;
   sub: string;
-  accent: Accent;
+  accent: Tone;
   live: boolean;
 }
 

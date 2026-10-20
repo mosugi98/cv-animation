@@ -17,7 +17,7 @@ function Line({ path, className }: { path: PathId; className?: string }) {
 
 /** Simplified conduction schematic. Everything that moves comes from the engine frame. */
 export function ActivationDiagram({ config, frame, description }: Props) {
-  const { dualPathways, accessoryPathway, flutterCircuit, ectopicFocus, ventricularFocus, ventricleCircuit, bundleLabels } = config;
+  const { dualPathways, accessoryPathway, flutterCircuit, ectopicFocus, ventricularFocus, ventricleCircuit, bundleLabels, fascicles, pacemaker } = config;
   return (
     <svg className="diagram" viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} role="img" aria-label={`Simplified conduction schematic. ${description}`}>
       <text className="dg-row" x="8" y="38">Atria</text>
@@ -44,7 +44,17 @@ export function ActivationDiagram({ config, frame, description }: Props) {
         <Line path="avn-direct" />
       )}
       <Line path="his" />
-      <Line path="bb-left" />
+      {fascicles ? (
+        <>
+          <Line path="lbb-trunk" />
+          <Line path="fasc-ant" />
+          <Line path="fasc-post" />
+          <text className="dg-small" x="74" y="136">anterior</text>
+          <text className="dg-small" x="136" y="196">posterior</text>
+        </>
+      ) : (
+        <Line path="bb-left" />
+      )}
       <Line path="bb-right" />
       {accessoryPathway && (
         <>
@@ -72,6 +82,8 @@ export function ActivationDiagram({ config, frame, description }: Props) {
         </>
       )}
 
+      {pacemaker && <PacemakerLeads {...pacemaker} />}
+
       {ventricularFocus && (
         <>
           <circle className="dg-focus" cx={SITES.ventricle[0]} cy={SITES.ventricle[1]} r="3.5" />
@@ -89,6 +101,34 @@ export function ActivationDiagram({ config, frame, description }: Props) {
         <circle key={`d${i}`} className={`dg-dot tone-${d.tone}`} cx={d.x} cy={d.y} r={d.r} opacity={d.opacity} />
       ))}
     </svg>
+  );
+}
+
+const LEAD_PATHS = {
+  atrial: [[282, 80], [282, 68], [240, 50], [118, 40]],
+  rv: [[282, 100], [282, 124], [268, 170]],
+  lv: [[296, 100], [304, 150], [306, 186], [112, 186], [112, 172]],
+  his: [[282, 100], [282, 118], [196, 118]],
+} as const satisfies Record<string, readonly Point[]>;
+
+/** Generator box and the lead(s) of a pacemaker, drawn over the heart schematic. */
+function PacemakerLeads({ atrial, rv, lv, his }: { atrial?: boolean; rv?: boolean; lv?: boolean; his?: boolean }) {
+  const lead = (key: keyof typeof LEAD_PATHS, show?: boolean) =>
+    show ? (
+      <g key={key}>
+        <polyline className="dg-lead" points={pts(LEAD_PATHS[key])} />
+        <circle className="dg-tip" cx={LEAD_PATHS[key].at(-1)![0]} cy={LEAD_PATHS[key].at(-1)![1]} r="3.4" />
+      </g>
+    ) : null;
+  return (
+    <g aria-hidden="true">
+      {lead('atrial', atrial)}
+      {lead('rv', rv)}
+      {lead('lv', lv)}
+      {lead('his', his)}
+      <rect className="dg-device" x="262" y="78" width="46" height="24" rx="5" />
+      <text className="dg-small dg-device-text" x="285" y="93" textAnchor="middle">pacemaker</text>
+    </g>
   );
 }
 

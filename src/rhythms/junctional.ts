@@ -12,7 +12,7 @@ export const JUNCTIONAL_PAUSE = 1.6;
 const WINDOW = 7.2;
 
 /** The AV junction fires on its own after a pause; its impulse also travels backwards into the atria. */
-function escapeBeat(q: number): { pulses: Pulse[]; beat: BeatEvent; retro: AtrialEvent; marks: Mark[] } {
+export function escapeBeat(q: number): { pulses: Pulse[]; beat: BeatEvent; retro: AtrialEvent; marks: Mark[] } {
   return {
     pulses: [
       { type: 'flash', site: 'junction', t: q - 0.06, tone: 'purple' },
